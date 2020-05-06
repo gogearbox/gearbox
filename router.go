@@ -1,147 +1,79 @@
 package gearbox
 
 import (
-	"log"
+	"fmt"
 	"strings"
 
 	"github.com/valyala/fasthttp"
 )
 
-type methodType uint8
-
-// Http methods
-const (
-	// Get Method
-	MethodGet methodType = iota + 1
-	// Head Method
-	MethodHead
-	// Post Method
-	MethodPost
-	// Put Method
-	MethodPut
-	// Patch Method
-	MethodPatch
-	// Delete Method
-	MethodDelete
-	// Connect Method
-	MethodConnect
-	// Options Method
-	MethodOptions
-	// Trace Method
-	MethodTrace
-)
-
-var httpMethodsList = [...]string{
-	fasthttp.MethodGet,
-	fasthttp.MethodHead,
-	fasthttp.MethodPost,
-	fasthttp.MethodPut,
-	fasthttp.MethodPatch,
-	fasthttp.MethodDelete,
-	fasthttp.MethodConnect,
-	fasthttp.MethodOptions,
-	fasthttp.MethodTrace,
-}
-
-type node struct {
+type routeNode struct {
 	Name     string
-	Method   methodType
+	Method   string
 	MatchAll bool
-	Handlers []func(*fasthttp.RequestCtx)
-	Children []*node
+	Methods  tst
+	Children tst
 }
 
-type route struct {
-	Method  methodType
+type routeInfo struct {
+	Method  string
 	Path    string
 	Handler func(*fasthttp.RequestCtx)
 }
 
-func setHTTPMethodsMapping() *TST {
-	mapping := &TST{}
-
-	mapping.Set(fasthttp.MethodGet, MethodGet)
-	mapping.Set(fasthttp.MethodHead, MethodHead)
-	mapping.Set(fasthttp.MethodPost, MethodPost)
-	mapping.Set(fasthttp.MethodPut, MethodPut)
-	mapping.Set(fasthttp.MethodPatch, MethodPatch)
-	mapping.Set(fasthttp.MethodDelete, MethodDelete)
-	mapping.Set(fasthttp.MethodConnect, MethodConnect)
-	mapping.Set(fasthttp.MethodOptions, MethodOptions)
-	mapping.Set(fasthttp.MethodTrace, MethodTrace)
-	return mapping
-}
-
-func getHTTPMethodStr(mType methodType) string {
-	index := mType - 1
-	if index < 0 || int(index) > len(httpMethodsList) {
-		log.Fatalf("Unknown method type %v", mType)
-	}
-	return httpMethodsList[index]
-}
-
-func validateRoutePath(path string) bool {
+// validateRoutePath makes sure that path complies with path's rules
+func validateRoutePath(path string) error {
 	length := len(path)
 	if length == 0 {
-		return false
+		return fmt.Errorf("length is zero")
 	}
 
 	if path[0] != '/' {
-		return false
+		return fmt.Errorf("path must start with /")
 	}
 
 	starIndex := strings.Index(path, "*")
-	if starIndex > -1 && starIndex < length-1 && path[starIndex-1] == '/' {
-		return false
+	if starIndex > 0 && starIndex < length-1 && path[starIndex-1] == '/' {
+		return fmt.Errorf("* must be in the end of path")
 	}
 
-	return true
+	return nil
 }
 
-func (gb *gearbox) registerRoute(mType methodType, path string, handler func(*fasthttp.RequestCtx)) {
+// registerRoute registers handler with method and path
+func (gb *gearboxApp) registerRoute(method string, path string, handler func(*fasthttp.RequestCtx)) error {
 	if handler == nil {
-		log.Fatalf("Route %s with Method %s does not contain any handlers!", path, getHTTPMethodStr(mType))
+		return fmt.Errorf("route %s with method %s does not contain any handlers", path, method)
 	}
 
-	if !validateRoutePath(path) {
-		log.Fatalf("Route %s is not valid!", path)
+	if err := validateRoutePath(path); err != nil {
+		return fmt.Errorf("route %s is not valid! - %s", path, err.Error())
 	}
 
-	gb.registeredRoutes = append(gb.registeredRoutes, &route{
+	gb.registeredRoutes = append(gb.registeredRoutes, &routeInfo{
 		Path:    path,
-		Method:  mType,
+		Method:  method,
 		Handler: handler,
 	})
+	return nil
 }
 
-func (gb *gearbox) extractKeywords() {
-	counter := 0
-	for i := range gb.registeredRoutes {
-		keywords := strings.Split(gb.registeredRoutes[i].Path, "/")
-		for j := range keywords {
-			if keywords[j] == "*" || keywords[j] == "" {
-				continue
-			} else if gb.pathKeywordsMapping.Get(keywords[j]) == nil {
-				gb.pathKeywordsMapping.Set(keywords[j], counter)
-				counter++
-			}
-		}
-	}
-}
-
-func (gb *gearbox) createEmptyNode(name string) *node {
-	return &node{
+// createEmptyRouteNode creates a new route node with name
+func createEmptyRouteNode(name string) *routeNode {
+	return &routeNode{
 		Name:     name,
-		Children: make([]*node, gb.pathKeywordsMapping.Count()),
-		Handlers: make([]func(*fasthttp.RequestCtx), MethodTrace),
+		Children: newTST(),
+		Methods:  newTST(),
 		MatchAll: false,
 	}
 }
 
-func (gb *gearbox) constructRoutingTree() {
-	gb.routingTree = gb.createEmptyNode("root")
+// constructRoutingTree constructs routing tree according to provided routes
+func (gb *gearboxApp) constructRoutingTree() error {
+	gb.routingTreeRoot = createEmptyRouteNode("root")
 	for _, route := range gb.registeredRoutes {
-		currentNode := gb.routingTree
+		currentNode := gb.routingTreeRoot
+
 		keywords := strings.Split(route.Path, "/")
 		keywordsLen := len(keywords)
 		for i := 1; i < keywordsLen; i++ {
@@ -153,58 +85,59 @@ func (gb *gearbox) constructRoutingTree() {
 				continue
 			}
 
-			keywordID := gb.pathKeywordsMapping.Get(keyword).(int)
-			if currentNode.Children[keywordID] == nil {
-				currentNode.Children[keywordID] = gb.createEmptyNode(keyword)
+			keywordNode, ok := currentNode.Children.Get(keyword).(*routeNode)
+			if !ok {
+				keywordNode = createEmptyRouteNode(keyword)
+				currentNode.Children.Set(keyword, keywordNode)
 			}
-			currentNode = currentNode.Children[keywordID]
+			currentNode = keywordNode
 		}
-		currentNode.Handlers[route.Method-1] = route.Handler
+
+		if routeHandler := currentNode.Methods.Get(route.Method); routeHandler != nil {
+			return fmt.Errorf("there already registered method %s for %s", route.Method, route.Path)
+		}
+		currentNode.Methods.Set(route.Method, route.Handler)
 	}
+	return nil
 }
 
-func (gb *gearbox) matchRoute(mType methodType, path string) func(*fasthttp.RequestCtx) {
-	keywords := strings.Split(path, "/")
-	keywordsLen := len(keywords)
-	currentNode := gb.routingTree
-	var lastMatchAll *node
+// matchRoute matches provided method and path with handler if it's existing
+func (gb *gearboxApp) matchRoute(method string, path string) func(*fasthttp.RequestCtx) {
+	currentNode := gb.routingTreeRoot
+	var lastMatchAll *routeNode
 	if currentNode.MatchAll {
 		lastMatchAll = currentNode
 	}
 
+	keywords := strings.Split(path, "/")
+	keywordsLen := len(keywords)
 	for i := 1; i < keywordsLen; i++ {
 		keyword := keywords[i]
 		if keyword == "" {
 			continue
 		}
 
-		keywordID, ok := gb.pathKeywordsMapping.Get(keyword).(int)
-		if !ok || currentNode.Children[keywordID] == nil {
-			if lastMatchAll == nil {
-				return nil
+		if keywordNode, ok := currentNode.Children.Get(keyword).(*routeNode); ok {
+			currentNode = keywordNode
+			if currentNode.MatchAll {
+				lastMatchAll = currentNode
 			}
-			return lastMatchAll.Handlers[mType-1]
+			continue
 		}
 
-		currentNode = currentNode.Children[keywordID]
-		if currentNode.MatchAll {
-			lastMatchAll = currentNode
+		if lastMatchAll == nil {
+			return nil
 		}
+
+		if routeHandler, ok := lastMatchAll.Methods.Get(method).(func(*fasthttp.RequestCtx)); ok {
+			return routeHandler
+		}
+
+		return nil
 	}
 
-	return currentNode.Handlers[mType-1]
-}
-
-func (gb *gearbox) handler(ctx *fasthttp.RequestCtx) {
-	method := ctx.Request.Header.Method()
-	path := ctx.URI().Path()
-	methodID, ok := gb.httpMapping.Get(string(method)).(methodType)
-	if ok {
-		handler := gb.matchRoute(methodID, string(path))
-		if handler != nil {
-			handler(ctx)
-			return
-		}
+	if routeHandler, ok := currentNode.Methods.Get(method).(func(*fasthttp.RequestCtx)); ok {
+		return routeHandler
 	}
-	ctx.Error("Unsupported path", fasthttp.StatusNotFound)
+	return nil
 }

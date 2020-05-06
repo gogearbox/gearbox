@@ -17,9 +17,9 @@
 </p>
 
 
-**gearbox** :gear: is an **experimental** web framework for building micro services written in Go with a focus on high performance and memory optimization
+**gearbox** :gear: is a web framework for building micro services written in Go with a focus on high performance and memory optimization
 
-Currently, **gearbox** :gear: is **under development** (not ready to be used) and built on [fasthttp](https://github.com/valyala/fasthttp) which is **10x faster** than net/http
+Currently, **gearbox** :gear: is **under development** and built on [fasthttp](https://github.com/valyala/fasthttp) which is **10x faster** than net/http
 
 In **gearbox**, we care about peformance and memory which will be used by each method while building things up and how we can improve that. it also takes more time to **research** about each component that will be used and **compare** it with different implementations of other open source web frameworks. It may end up writing our **own components** in an optimized way to achieve our goals
 
@@ -30,11 +30,47 @@ In **gearbox**, we care about peformance and memory which will be used by each m
 + Easy to use
 + Lightweight
 
-### Support
+
+### Supported Go versions & installation
+
+:gear: gearbox requires version `1.11` or higher of Go ([Download Go](https://golang.org/dl/))
+
+Just use [go get](https://golang.org/cmd/go/#hdr-Add_dependencies_to_current_module_and_install_them) to download and install gearbox
+
+```bash
+go get -u github.com/abahmed/gearbox
+```
+
+### Example
+
+```go
+package main
+
+import (
+  "github.com/abahmed/gearbox"
+  "github.com/valyala/fasthttp"
+)
+
+func main() {
+  // Setup gearbox
+  gearbox := gearbox.New()
+  
+  // Define your handlers
+  gearbox.Get("/hello", func(ctx *fasthttp.RequestCtx) {
+	ctx.Response.SetBodyString("Hello World!")
+  })
+
+  // Start app
+  gearbox.Start(":3000")
+}
+```
+
+### Contribute & Support
 + Add a [GitHub Star](https://github.com/abahmed/gearbox/stargazers)
 + [Suggest new features, ideas and optimizations](https://github.com/abahmed/gearbox/issues)
 + [Report issues](https://github.com/abahmed/gearbox/issues)
-+ [Fixing issues](https://github.com/abahmed/gearbox/issues)
+
+Check [Our Wiki](https://github.com/abahmed/gearbox/wiki) for more information about **gearbox** and how to **contribute**
 
 ### Contributors
 

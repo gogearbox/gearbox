@@ -8,29 +8,41 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-type gearbox struct {
-	httpServer          *fasthttp.Server
-	routingTree         *node
-	pathKeywordsMapping *TST
-	httpMapping         *TST
-	registeredRoutes    []*route
+// gearbox interface
+type gearbox interface {
+	Start(address string) error
+	Stop() error
+	Get(path string, handler func(*fasthttp.RequestCtx)) error
+	Head(path string, handler func(*fasthttp.RequestCtx)) error
+	Post(path string, handler func(*fasthttp.RequestCtx)) error
+	Put(path string, handler func(*fasthttp.RequestCtx)) error
+	Patch(path string, handler func(*fasthttp.RequestCtx)) error
+	Delete(path string, handler func(*fasthttp.RequestCtx)) error
+	Connect(path string, handler func(*fasthttp.RequestCtx)) error
+	Options(path string, handler func(*fasthttp.RequestCtx)) error
+	Trace(path string, handler func(*fasthttp.RequestCtx)) error
 }
 
-// New creates a new instance.
-func New() *gearbox {
-	gb := new(gearbox)
-	gb.httpMapping = setHTTPMethodsMapping()
-	gb.pathKeywordsMapping = &TST{}
-	gb.registeredRoutes = make([]*route, 0)
+type gearboxApp struct {
+	httpServer       *fasthttp.Server
+	routingTreeRoot  *routeNode
+	registeredRoutes []*routeInfo
+}
+
+// New creates a new instance
+func New() gearbox {
+	gb := new(gearboxApp)
+	gb.registeredRoutes = make([]*routeInfo, 0)
 	return gb
 }
 
-// Start handling requests.
-func (gb *gearbox) Start(address string) error {
-	gb.extractKeywords()
+// Start handling requests
+func (gb *gearboxApp) Start(address string) error {
 	gb.constructRoutingTree()
 	gb.httpServer = &fasthttp.Server{
-		Handler: gb.handler,
+		Handler:      gb.handler,
+		Logger:       nil,
+		LogAllErrors: false,
 	}
 
 	ln, err := net.Listen("tcp4", address)
@@ -42,7 +54,7 @@ func (gb *gearbox) Start(address string) error {
 }
 
 // Stop serving
-func (gb *gearbox) Stop() error {
+func (gb *gearboxApp) Stop() error {
 	if gb.httpServer == nil {
 		return fmt.Errorf("Service is not running")
 	}
@@ -50,46 +62,57 @@ func (gb *gearbox) Stop() error {
 }
 
 // Get registers an http relevant method
-func (gb *gearbox) Get(path string, handler func(*fasthttp.RequestCtx)) {
-	gb.registerRoute(MethodGet, path, handler)
+func (gb *gearboxApp) Get(path string, handler func(*fasthttp.RequestCtx)) error {
+	return gb.registerRoute(MethodGet, path, handler)
 }
 
 // Head registers an http relevant method
-func (gb *gearbox) Head(path string, handler func(*fasthttp.RequestCtx)) {
-	gb.registerRoute(MethodHead, path, handler)
+func (gb *gearboxApp) Head(path string, handler func(*fasthttp.RequestCtx)) error {
+	return gb.registerRoute(MethodHead, path, handler)
 }
 
 // Post registers an http relevant method
-func (gb *gearbox) Post(path string, handler func(*fasthttp.RequestCtx)) {
-	gb.registerRoute(MethodPost, path, handler)
+func (gb *gearboxApp) Post(path string, handler func(*fasthttp.RequestCtx)) error {
+	return gb.registerRoute(MethodPost, path, handler)
 }
 
 // Put registers an http relevant method
-func (gb *gearbox) Put(path string, handler func(*fasthttp.RequestCtx)) {
-	gb.registerRoute(MethodPut, path, handler)
+func (gb *gearboxApp) Put(path string, handler func(*fasthttp.RequestCtx)) error {
+	return gb.registerRoute(MethodPut, path, handler)
 }
 
 // Patch registers an http relevant method
-func (gb *gearbox) Patch(path string, handler func(*fasthttp.RequestCtx)) {
-	gb.registerRoute(MethodPatch, path, handler)
+func (gb *gearboxApp) Patch(path string, handler func(*fasthttp.RequestCtx)) error {
+	return gb.registerRoute(MethodPatch, path, handler)
 }
 
 // Delete registers an http relevant method
-func (gb *gearbox) Delete(path string, handler func(*fasthttp.RequestCtx)) {
-	gb.registerRoute(MethodDelete, path, handler)
+func (gb *gearboxApp) Delete(path string, handler func(*fasthttp.RequestCtx)) error {
+	return gb.registerRoute(MethodDelete, path, handler)
 }
 
 // Connect registers an http relevant method
-func (gb *gearbox) Connect(path string, handler func(*fasthttp.RequestCtx)) {
-	gb.registerRoute(MethodConnect, path, handler)
+func (gb *gearboxApp) Connect(path string, handler func(*fasthttp.RequestCtx)) error {
+	return gb.registerRoute(MethodConnect, path, handler)
 }
 
 // Options registers an http relevant method
-func (gb *gearbox) Options(path string, handler func(*fasthttp.RequestCtx)) {
-	gb.registerRoute(MethodOptions, path, handler)
+func (gb *gearboxApp) Options(path string, handler func(*fasthttp.RequestCtx)) error {
+	return gb.registerRoute(MethodOptions, path, handler)
 }
 
 // Trace registers an http relevant method
-func (gb *gearbox) Trace(path string, handler func(*fasthttp.RequestCtx)) {
-	gb.registerRoute(MethodTrace, path, handler)
+func (gb *gearboxApp) Trace(path string, handler func(*fasthttp.RequestCtx)) error {
+	return gb.registerRoute(MethodTrace, path, handler)
+}
+
+// Handles all incoming requests and route them to proper handler according to
+// method and path
+func (gb *gearboxApp) handler(ctx *fasthttp.RequestCtx) {
+	if handler := gb.matchRoute(getString(ctx.Request.Header.Method()), getString(ctx.URI().Path())); handler != nil {
+		handler(ctx)
+		return
+	}
+
+	ctx.Error("Not found", fasthttp.StatusNotFound)
 }

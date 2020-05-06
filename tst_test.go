@@ -8,7 +8,7 @@ import (
 )
 
 func ExampleTST() {
-	tst := &TST{}
+	tst := newTST()
 	tst.Set("user", 1)
 	fmt.Println(tst.Get("user").(int))
 	fmt.Println(tst.Get("us"))
@@ -26,7 +26,6 @@ func ExampleTST() {
 	fmt.Println(tst.Get("حساب").(int))
 	tst.Set("", 14)
 	fmt.Println(tst.Get(""))
-	fmt.Println(tst.Count())
 	// Output:
 	// 1
 	// <nil>
@@ -36,7 +35,6 @@ func ExampleTST() {
 	// 12
 	// 15
 	// <nil>
-	// 5
 }
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -50,7 +48,7 @@ func RandStringBytes() string {
 }
 
 func BenchmarkTSTLookup(b *testing.B) {
-	trie := &TST{}
+	trie := newTST()
 	rand.Seed(time.Now().UnixNano())
 	for n := 0; n < rand.Intn(2000); n++ {
 		trie.Set(RandStringBytes(), rand.Intn(10000))

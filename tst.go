@@ -2,12 +2,13 @@ package gearbox
 
 // Basic Implementation for Ternary Search Tree (TST)
 
-// TST holds a pointer to the root element of Ternary Search Tree
-type TST struct {
-	root    *tstNode
-	counter uint32
+// tst returns Ternary Search Tree
+type tst interface {
+	Set(word string, value interface{})
+	Get(word string) interface{}
 }
 
+// Ternary Search Tree node that holds a single character and value if there is
 type tstNode struct {
 	lower  *tstNode
 	higher *tstNode
@@ -16,24 +17,28 @@ type tstNode struct {
 	value  interface{}
 }
 
-// Set adds a value to provided key
-func (t *TST) Set(word string, value interface{}) {
+// newTST returns Ternary Search Tree
+func newTST() tst {
+	return &tstNode{}
+}
+
+// Set adds a value to provided string
+func (t *tstNode) Set(word string, value interface{}) {
 	if len(word) < 1 {
 		return
 	}
-	t.root = t.insert(t.root, word, 0, value)
-	t.counter++
+	t = t.insert(t, word, 0, value)
 }
 
 // Get gets the value of provided key if it's existing, otherwise returns nil
-func (t *TST) Get(word string) interface{} {
+func (t *tstNode) Get(word string) interface{} {
 	length := len(word)
-	if length < 1 {
+	if length < 1 || t == nil {
 		return nil
 	}
 	lastElm := length - 1
 
-	n := t.root
+	n := t
 	idx := 0
 	key := word[idx]
 	for n != nil {
@@ -54,12 +59,8 @@ func (t *TST) Get(word string) interface{} {
 	return nil
 }
 
-// Count gets counter of current values
-func (t *TST) Count() uint32 {
-	return t.counter
-}
-
-func (t *TST) insert(n *tstNode, word string, index int, value interface{}) *tstNode {
+// insert is an internal method for inserting a string with value in TST
+func (t *tstNode) insert(n *tstNode, word string, index int, value interface{}) *tstNode {
 	key := word[index]
 	lastElm := len(word) - 1
 
