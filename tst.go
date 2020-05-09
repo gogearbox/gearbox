@@ -27,7 +27,7 @@ func (t *tstNode) Set(word string, value interface{}) {
 	if len(word) < 1 {
 		return
 	}
-	t = t.insert(t, word, 0, value)
+	t.insert(t, word, 0, value)
 }
 
 // Get gets the value of provided key if it's existing, otherwise returns nil

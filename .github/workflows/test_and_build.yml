@@ -1,11 +1,17 @@
-on: [push, pull_request]
+name: Test & Build
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 env:
   GO111MODULE: on
   # For versions earlier than Go 1.13
   GOPROXY: https://proxy.golang.org
 
-name: Test & Build
 jobs:
   test_and_build:
     strategy:

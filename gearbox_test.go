@@ -96,6 +96,30 @@ var pingHandler = func(c *fasthttp.RequestCtx) {
 	c.Response.SetBodyString("pong")
 }
 
+// registerRoute matches with register route request with available methods and calls it
+func registerRoute(gb Gearbox, method string, path string, handler func(*fasthttp.RequestCtx)) {
+	switch method {
+	case MethodGet:
+		gb.Get(path, handler)
+	case MethodHead:
+		gb.Head(path, handler)
+	case MethodPost:
+		gb.Post(path, handler)
+	case MethodPut:
+		gb.Put(path, handler)
+	case MethodPatch:
+		gb.Patch(path, handler)
+	case MethodDelete:
+		gb.Delete(path, handler)
+	case MethodConnect:
+		gb.Connect(path, handler)
+	case MethodOptions:
+		gb.Options(path, handler)
+	case MethodTrace:
+		gb.Trace(path, handler)
+	}
+}
+
 // TestMethods tests creating gearbox instance, registering routes, making
 // requests and getting proper responses
 func TestMethods(t *testing.T) {
@@ -125,26 +149,7 @@ func TestMethods(t *testing.T) {
 
 	// register routes according to method
 	for _, r := range routes {
-		switch r.method {
-		case MethodGet:
-			gb.Get(r.path, r.handler)
-		case MethodHead:
-			gb.Head(r.path, r.handler)
-		case MethodPost:
-			gb.Post(r.path, r.handler)
-		case MethodPut:
-			gb.Put(r.path, r.handler)
-		case MethodPatch:
-			gb.Patch(r.path, r.handler)
-		case MethodDelete:
-			gb.Delete(r.path, r.handler)
-		case MethodConnect:
-			gb.Connect(r.path, r.handler)
-		case MethodOptions:
-			gb.Options(r.path, r.handler)
-		case MethodTrace:
-			gb.Trace(r.path, r.handler)
-		}
+		registerRoute(gb, r.method, r.path, r.handler)
 	}
 
 	// start serving
@@ -210,6 +215,37 @@ func TestStart(t *testing.T) {
 	}()
 
 	gb.Start(":3000")
+}
+
+// TestStartInvalidListner tests start with invalid listner
+func TestStartInvalidListner(t *testing.T) {
+	gb := New()
+
+	go func() {
+		time.Sleep(1000 * time.Millisecond)
+		gb.Stop()
+	}()
+
+	if err := gb.Start("invalid listener"); err == nil {
+		t.Fatalf("invalid listener passed")
+	}
+}
+
+// TestStartConflictHandlers tests start with two handlers for the same path and method
+func TestStartConflictHandlers(t *testing.T) {
+	gb := New()
+
+	gb.Get("/test", handler)
+	gb.Get("/test", handler)
+
+	go func() {
+		time.Sleep(1000 * time.Millisecond)
+		gb.Stop()
+	}()
+
+	if err := gb.Start(":3001"); err == nil {
+		t.Fatalf("invalid listener passed")
+	}
 }
 
 // TestStop tests stop service method

@@ -159,3 +159,50 @@ func TestConstructRoutingTree(t *testing.T) {
 		}
 	}
 }
+
+// TestNullRoutingTree tests matching with null routing tree
+func TestNullRoutingTree(t *testing.T) {
+	// create gearbox instance
+	gb := new(gearbox)
+	gb.registeredRoutes = make([]*routeInfo, 0)
+
+	// register route
+	gb.registerRoute(MethodGet, "/*", emptyHandler)
+
+	// test handler is nil
+	if handler := gb.matchRoute(MethodGet, "/hello/world"); handler != nil {
+		t.Errorf("input GET /hello/world find handler expecting nil")
+	}
+}
+
+// TestMatchAll tests matching all requests with one handler
+func TestMatchAll(t *testing.T) {
+	// create gearbox instance
+	gb := new(gearbox)
+	gb.registeredRoutes = make([]*routeInfo, 0)
+
+	// register route
+	gb.registerRoute(MethodGet, "/*", emptyHandler)
+	gb.constructRoutingTree()
+
+	// test handler is not nil
+	if handler := gb.matchRoute(MethodGet, "/hello/world"); handler == nil {
+		t.Errorf("input GET /hello/world find nil expecting handler")
+	}
+}
+
+// TestConstructRoutingTree tests constructing routing tree with two handlers
+// for the same path and method
+func TestConstructRoutingTreeConflict(t *testing.T) {
+	// create gearbox instance
+	gb := new(gearbox)
+	gb.registeredRoutes = make([]*routeInfo, 0)
+
+	// register routes
+	gb.registerRoute(MethodGet, "/articles/test", emptyHandler)
+	gb.registerRoute(MethodGet, "/articles/test", emptyHandler)
+
+	if err := gb.constructRoutingTree(); err == nil {
+		t.Fatalf("invalid listener passed")
+	}
+}
