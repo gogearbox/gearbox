@@ -1,3 +1,4 @@
+name: Test & Build
 on:
   push:
     branches:
@@ -11,7 +12,6 @@ env:
   # For versions earlier than Go 1.13
   GOPROXY: https://proxy.golang.org
 
-name: Test & Build
 jobs:
   test_and_build:
     strategy:
