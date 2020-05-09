@@ -11,7 +11,7 @@ import (
 // Exported constants
 const (
 	// Version of gearbox
-	Version = "0.0.1"
+	Version = "0.0.2"
 )
 
 // HTTP methods were copied from net/http.
