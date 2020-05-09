@@ -151,9 +151,6 @@ func (gb *gearbox) newHTTPServer() *fasthttp.Server {
 
 // Stop serving
 func (gb *gearbox) Stop() error {
-	if gb.httpServer == nil {
-		return nil
-	}
 	return gb.httpServer.Shutdown()
 }
 

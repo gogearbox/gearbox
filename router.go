@@ -123,6 +123,11 @@ func (gb *gearbox) matchRoute(method string, path string) func(*fasthttp.Request
 	// Start with root node
 	currentNode := gb.routingTreeRoot
 
+	// Return if root is empty
+	if currentNode == nil {
+		return nil
+	}
+
 	// Used to track if this path matched with match all node during matching
 	// loop to fallback
 	var lastMatchAll *routeNode
