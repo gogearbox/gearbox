@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// ExampleTST tests TST set and get methods
 func ExampleTST() {
 	tst := newTST()
 	tst.Set("user", 1)
@@ -37,9 +38,9 @@ func ExampleTST() {
 	// <nil>
 }
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
+// RandStringBytes generates random string from English letters
 func RandStringBytes() string {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	b := make([]byte, rand.Intn(100))
 	for i := range b {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
@@ -48,14 +49,14 @@ func RandStringBytes() string {
 }
 
 func BenchmarkTSTLookup(b *testing.B) {
-	trie := newTST()
+	tst := newTST()
 	rand.Seed(time.Now().UnixNano())
 	for n := 0; n < rand.Intn(2000); n++ {
-		trie.Set(RandStringBytes(), rand.Intn(10000))
+		tst.Set(RandStringBytes(), rand.Intn(10000))
 	}
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		trie.Get("user")
+		tst.Get("user")
 	}
 }

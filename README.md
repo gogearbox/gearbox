@@ -21,7 +21,7 @@
 
 Currently, **gearbox** :gear: is **under development** and built on [fasthttp](https://github.com/valyala/fasthttp) which is **10x faster** than net/http
 
-In **gearbox**, we care about peformance and memory which will be used by each method while building things up and how we can improve that. it also takes more time to **research** about each component that will be used and **compare** it with different implementations of other open source web frameworks. It may end up writing our **own components** in an optimized way to achieve our goals
+In **gearbox**, we care about peformance and memory which will be used by each method while building things up and how we can improve that. It also takes more time to **research** about each component that will be used and **compare** it with different implementations of other open source web frameworks. It may end up writing our **own components** in an optimized way to achieve our goals
 
 ### gearbox seeks to be
 + Secure :closed_lock_with_key:
@@ -60,7 +60,7 @@ func main() {
 	ctx.Response.SetBodyString("Hello World!")
   })
 
-  // Start app
+  // Start service
   gearbox.Start(":3000")
 }
 ```
@@ -80,7 +80,7 @@ Check [Our Wiki](https://github.com/abahmed/gearbox/wiki) for more information a
 
 ### Get in touch!
 
-Feel free to Join us on [Gitter](https://gitter.im/abahmed/gearbox) if you have questions, or suggestions
+Feel free to Join us on [Gitter](https://gitter.im/abahmed/gearbox), or email us at [gearbox@googlegroups.com](gearbox@googlegroups.com)  if you have questions, or suggestions
 
 ### License
 

@@ -2,6 +2,7 @@ package gearbox
 
 import "fmt"
 
+// ExampleGetString tests converting []byte to string
 func ExampleGetString() {
 	b := []byte("ABC€")
 	str := getString(b)

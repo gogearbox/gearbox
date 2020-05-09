@@ -6,7 +6,9 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+// TestValidateRoutePath tests if provided paths are valid or not
 func TestValidateRoutePath(t *testing.T) {
+	// test cases
 	tests := []struct {
 		input string
 		isErr bool
@@ -23,14 +25,18 @@ func TestValidateRoutePath(t *testing.T) {
 		err := validateRoutePath(tt.input)
 		if (err != nil && !tt.isErr) || (err == nil && tt.isErr) {
 			errMsg := ""
+
+			// get error message if there is
 			if err != nil {
 				errMsg = err.Error()
 			}
+
 			t.Errorf("input %s find error %t %s expecting error %t", tt.input, err == nil, errMsg, tt.isErr)
 		}
 	}
 }
 
+// TestCreateEmptyNode tests creating route node with specific name
 func TestCreateEmptyNode(t *testing.T) {
 	name := "test_node"
 	node := createEmptyRouteNode(name)
@@ -40,10 +46,12 @@ func TestCreateEmptyNode(t *testing.T) {
 	}
 }
 
+// emptyHandler just an empty handler
 var emptyHandler = func(ctx *fasthttp.RequestCtx) {}
 
+// TestRegisterRoute tests registering routes after validating it
 func TestRegisterRoute(t *testing.T) {
-
+	// test cases
 	tests := []struct {
 		method  string
 		path    string
@@ -59,34 +67,45 @@ func TestRegisterRoute(t *testing.T) {
 		{method: MethodGet, path: "/account/*/getAccount", handler: nil, isErr: true},
 	}
 
-	gearbox := new(gearboxApp)
-	gearbox.registeredRoutes = make([]*routeInfo, 0)
+	// create gearbox instance
+	gb := new(gearbox)
+	gb.registeredRoutes = make([]*routeInfo, 0)
 
+	// counter for valid routes
 	validCounter := 0
+
 	for _, tt := range tests {
-		err := gearbox.registerRoute(tt.method, tt.path, tt.handler)
+		err := gb.registerRoute(tt.method, tt.path, tt.handler)
 		if (err != nil && !tt.isErr) || (err == nil && tt.isErr) {
 			errMsg := ""
+
+			// get error message if there is
 			if err != nil {
 				errMsg = err.Error()
 			}
+
 			t.Errorf("input %v find error %t %s expecting error %t", tt, err == nil, errMsg, tt.isErr)
 		}
+
 		if !tt.isErr {
 			validCounter++
 		}
 	}
 
-	currentCount := len(gearbox.registeredRoutes)
+	// check valid counter is the same as count of registered routes
+	currentCount := len(gb.registeredRoutes)
 	if validCounter != currentCount {
 		t.Errorf("input %d find %d expecting %d", validCounter, currentCount, validCounter)
 	}
 }
 
+// TestConstructRoutingTree tests constructing routing tree and matching routes properly
 func TestConstructRoutingTree(t *testing.T) {
-	gearbox := new(gearboxApp)
-	gearbox.registeredRoutes = make([]*routeInfo, 0)
+	// create gearbox instance
+	gb := new(gearbox)
+	gb.registeredRoutes = make([]*routeInfo, 0)
 
+	// testing routes
 	routes := []struct {
 		method  string
 		path    string
@@ -103,19 +122,14 @@ func TestConstructRoutingTree(t *testing.T) {
 		{method: MethodGet, path: "/users/*", handler: emptyHandler},
 	}
 
+	// register routes
 	for _, r := range routes {
-		gearbox.registerRoute(r.method, r.path, r.handler)
+		gb.registerRoute(r.method, r.path, r.handler)
 	}
 
-	gearbox.constructRoutingTree()
+	gb.constructRoutingTree()
 
-	for _, r := range routes {
-		handler := gearbox.matchRoute(r.method, r.path)
-		if handler == nil {
-			t.Errorf("input %s %s find nil expecting handler", r.method, r.path)
-		}
-	}
-
+	// requests test cases
 	requests := []struct {
 		method string
 		path   string
@@ -134,10 +148,12 @@ func TestConstructRoutingTree(t *testing.T) {
 		{method: MethodGet, path: "/users/ahmed", match: true},
 		{method: MethodGet, path: "/users/ahmed/ahmed", match: true},
 		{method: MethodPut, path: "/users/ahmed/ahmed", match: false},
+		{method: MethodPut, path: "", match: false},
 	}
 
+	// test matching routes
 	for _, rq := range requests {
-		handler := gearbox.matchRoute(rq.method, rq.path)
+		handler := gb.matchRoute(rq.method, rq.path)
 		if (handler != nil && !rq.match) || (handler == nil && rq.match) {
 			t.Errorf("input %s %s find nil expecting handler", rq.method, rq.path)
 		}
