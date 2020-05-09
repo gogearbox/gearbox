@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"testing"
+	"time"
 
 	"github.com/valyala/fasthttp"
 )
@@ -199,8 +200,20 @@ func TestMethods(t *testing.T) {
 	}
 }
 
+// TestStart tests start service method
+func TestStart(t *testing.T) {
+	gb := New()
+
+	go func() {
+		time.Sleep(1000 * time.Millisecond)
+		gb.Stop()
+	}()
+
+	gb.Start(":3000")
+}
+
 // TestStop tests stop service method
 func TestStop(t *testing.T) {
-	gearbox := New()
-	gearbox.Stop()
+	gb := New()
+	gb.Stop()
 }

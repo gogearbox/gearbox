@@ -121,6 +121,7 @@ type gearbox struct {
 func New() Gearbox {
 	gb := new(gearbox)
 	gb.registeredRoutes = make([]*routeInfo, 0)
+	gb.httpServer = gb.newHTTPServer()
 	return gb
 }
 
@@ -131,18 +132,21 @@ func (gb *gearbox) Start(address string) error {
 		return fmt.Errorf("Unable to construct routing %s", err.Error())
 	}
 
-	gb.httpServer = &fasthttp.Server{
-		Handler:      gb.handler,
-		Logger:       nil,
-		LogAllErrors: false,
-	}
-
 	ln, err := net.Listen("tcp4", address)
 	if err != nil {
 		return err
 	}
 
 	return gb.httpServer.Serve(ln)
+}
+
+// newHTTPServer returns a new instance of fasthttp server
+func (gb *gearbox) newHTTPServer() *fasthttp.Server {
+	return &fasthttp.Server{
+		Handler:      gb.handler,
+		Logger:       nil,
+		LogAllErrors: false,
+	}
 }
 
 // Stop serving
