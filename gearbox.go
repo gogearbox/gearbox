@@ -12,6 +12,7 @@ import (
 const (
 	// Version of gearbox
 	Version = "0.0.2"
+	Name = "Gearbox"
 )
 
 // HTTP methods were copied from net/http.
@@ -154,7 +155,7 @@ func (gb *gearbox) newHTTPServer() *fasthttp.Server {
 func (gb *gearbox) Stop() error {
 	err := gb.httpServer.Shutdown();
 	if err == nil && gb.address != "" {
-		fmt.Printf("Gearbox V%s stopped listening on %s", Version, gb.address)
+		fmt.Printf("%s V%s stopped listening on %s", Name,  Version, gb.address)
 		return nil
 	}
 	return err
