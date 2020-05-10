@@ -217,8 +217,8 @@ func TestStart(t *testing.T) {
 	gb.Start(":3000")
 }
 
-// TestStartInvalidListner tests start with invalid listner
-func TestStartInvalidListner(t *testing.T) {
+// TestStartInvalidListener tests start with invalid listener
+func TestStartInvalidListener(t *testing.T) {
 	gb := New()
 
 	go func() {
@@ -251,5 +251,12 @@ func TestStartConflictHandlers(t *testing.T) {
 // TestStop tests stop service method
 func TestStop(t *testing.T) {
 	gb := New()
-	gb.Stop()
+
+	go func() {
+		time.Sleep(1000 * time.Millisecond)
+		gb.Stop()
+	}()
+
+	gb.Start("")
 }
+

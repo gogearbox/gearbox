@@ -4,14 +4,14 @@ package gearbox
 import (
 	"fmt"
 	"net"
-
+	"log"
 	"github.com/valyala/fasthttp"
 )
 
 // Exported constants
 const (
-	// Version of gearbox
-	Version = "0.0.2"
+	Version = "0.0.2" 	// Version of gearbox
+	Name = "Gearbox" // Name of gearbox
 )
 
 // HTTP methods were copied from net/http.
@@ -115,6 +115,7 @@ type gearbox struct {
 	httpServer       *fasthttp.Server
 	routingTreeRoot  *routeNode
 	registeredRoutes []*routeInfo
+	address          string		// server address
 }
 
 // New creates a new instance of gearbox
@@ -136,7 +137,7 @@ func (gb *gearbox) Start(address string) error {
 	if err != nil {
 		return err
 	}
-
+	gb.address = address
 	return gb.httpServer.Serve(ln)
 }
 
@@ -151,7 +152,12 @@ func (gb *gearbox) newHTTPServer() *fasthttp.Server {
 
 // Stop serving
 func (gb *gearbox) Stop() error {
-	return gb.httpServer.Shutdown()
+	err := gb.httpServer.Shutdown();
+	if err == nil && gb.address != "" { // check if shutdown was ok and server had valid address
+		log.Printf("%s stopped listening on %s", Name, gb.address)
+		return nil
+	}
+	return err
 }
 
 // Get registers an http relevant method
