@@ -21,6 +21,10 @@ type routeInfo struct {
 	Handler func(*fasthttp.RequestCtx)
 }
 
+type routerFallback struct {
+	Handler func(*fasthttp.RequestCtx)
+}
+
 // validateRoutePath makes sure that path complies with path's rules
 func validateRoutePath(path string) error {
 	// Check length of the path
@@ -61,6 +65,17 @@ func (gb *gearbox) registerRoute(method string, path string, handler func(*fasth
 		Method:  method,
 		Handler: handler,
 	})
+	return nil
+}
+
+// registerFallback registers a single handler that will match only if all other routes fail to match
+func (gb *gearbox) registerFallback(handler func(*fasthttp.RequestCtx)) error {
+	// Handler is not provided
+	if handler == nil {
+		return fmt.Errorf("fallback does not contain a handler")
+	}
+
+	gb.registeredFallback = &routerFallback{Handler: handler}
 	return nil
 }
 
@@ -120,6 +135,18 @@ func (gb *gearbox) constructRoutingTree() error {
 
 // matchRoute matches provided method and path with handler if it's existing
 func (gb *gearbox) matchRoute(method string, path string) func(*fasthttp.RequestCtx) {
+	if handler := gb.matchRouteAgainstRegistered(method, path); handler != nil {
+		return handler
+	}
+
+	if gb.registeredFallback != nil && gb.registeredFallback.Handler != nil {
+		return gb.registeredFallback.Handler
+	}
+
+	return nil
+}
+
+func (gb *gearbox) matchRouteAgainstRegistered(method string, path string) func(*fasthttp.RequestCtx) {
 	// Start with root node
 	currentNode := gb.routingTreeRoot
 

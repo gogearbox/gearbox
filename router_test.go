@@ -222,3 +222,52 @@ func TestConstructRoutingTreeConflict(t *testing.T) {
 		t.Fatalf("invalid listener passed")
 	}
 }
+
+// TestNoRegisteredFallback tests that if no registered fallback is available
+// matchRoute() returns nil
+func TestNoRegisteredFallback(t *testing.T) {
+	// create gearbox instance
+	gb := new(gearbox)
+	gb.registeredRoutes = make([]*routeInfo, 0)
+
+	// register routes
+	gb.registerRoute(MethodGet, "/articles", emptyHandler)
+	gb.constructRoutingTree()
+
+	// attempt to match route that cannot match
+	if handler := gb.matchRoute(MethodGet, "/fail"); handler != nil {
+		t.Errorf("input GET /fail found a valid handler, expecting nil")
+	}
+}
+
+// TestFallback tests that if a registered fallback is available
+// matchRoute() returns the non-nil registered fallback handler
+func TestFallback(t *testing.T) {
+	// create gearbox instance
+	gb := new(gearbox)
+	gb.registeredRoutes = make([]*routeInfo, 0)
+
+	// register routes
+	gb.registerRoute(MethodGet, "/articles", emptyHandler)
+	if err := gb.registerFallback(emptyHandler); err != nil {
+		t.Errorf("invalid fallback: %s", err.Error())
+	}
+	gb.constructRoutingTree()
+
+	// attempt to match route that cannot match
+	if handler := gb.matchRoute(MethodGet, "/fail"); handler == nil {
+		t.Errorf("input GET /fail did not find a valid handler, expecting valid fallback handler")
+	}
+}
+
+// TestInvalidFallback tests that a fallback cannot be registered
+// with a nil handler
+func TestInvalidFallback(t *testing.T) {
+	// create gearbox instance
+	gb := new(gearbox)
+
+	// attempt to register an invalid (nil) fallback handler
+	if err := gb.registerFallback(nil); err == nil {
+		t.Errorf("registering an invalid fallback did not return an error, expected error")
+	}
+}

@@ -3,15 +3,16 @@ package gearbox
 
 import (
 	"fmt"
-	"net"
 	"log"
+	"net"
+
 	"github.com/valyala/fasthttp"
 )
 
 // Exported constants
 const (
-	Version = "0.0.2" 	// Version of gearbox
-	Name = "Gearbox" // Name of gearbox
+	Version = "0.0.2"   // Version of gearbox
+	Name    = "Gearbox" // Name of gearbox
 )
 
 // HTTP methods were copied from net/http.
@@ -108,14 +109,16 @@ type Gearbox interface {
 	Connect(path string, handler func(*fasthttp.RequestCtx)) error
 	Options(path string, handler func(*fasthttp.RequestCtx)) error
 	Trace(path string, handler func(*fasthttp.RequestCtx)) error
+	Fallback(handler func(*fasthttp.RequestCtx)) error
 }
 
 // gearbox implements Gearbox interface
 type gearbox struct {
-	httpServer       *fasthttp.Server
-	routingTreeRoot  *routeNode
-	registeredRoutes []*routeInfo
-	address          string		// server address
+	httpServer         *fasthttp.Server
+	routingTreeRoot    *routeNode
+	registeredRoutes   []*routeInfo
+	address            string // server address
+	registeredFallback *routerFallback
 }
 
 // New creates a new instance of gearbox
@@ -152,7 +155,7 @@ func (gb *gearbox) newHTTPServer() *fasthttp.Server {
 
 // Stop serving
 func (gb *gearbox) Stop() error {
-	err := gb.httpServer.Shutdown();
+	err := gb.httpServer.Shutdown()
 	if err == nil && gb.address != "" { // check if shutdown was ok and server had valid address
 		log.Printf("%s stopped listening on %s", Name, gb.address)
 		return nil
@@ -203,6 +206,11 @@ func (gb *gearbox) Options(path string, handler func(*fasthttp.RequestCtx)) erro
 // Trace registers an http relevant method
 func (gb *gearbox) Trace(path string, handler func(*fasthttp.RequestCtx)) error {
 	return gb.registerRoute(MethodTrace, path, handler)
+}
+
+// Fallback registers an http handler only fired when no other routes match with request
+func (gb *gearbox) Fallback(handler func(*fasthttp.RequestCtx)) error {
+	return gb.registerFallback(handler)
 }
 
 // Handles all incoming requests and route them to proper handler according to
