@@ -99,6 +99,18 @@ func TestRegisterRoute(t *testing.T) {
 	}
 }
 
+// TestRegisterInvalidRoute tests registering invalid routes
+func TestRegisterInvalidRoute(t *testing.T) {
+	// create gearbox instance
+	gb := new(gearbox)
+	gb.registeredRoutes = make([]*routeInfo, 0)
+
+	// test handler is nil
+	if err := gb.registerRoute(MethodGet, "invalid Path", emptyHandler); err == nil {
+		t.Errorf("input GET invalid Path find nil expecting error")
+	}
+}
+
 // TestConstructRoutingTree tests constructing routing tree and matching routes properly
 func TestConstructRoutingTree(t *testing.T) {
 	// create gearbox instance
@@ -188,6 +200,10 @@ func TestMatchAll(t *testing.T) {
 	// test handler is not nil
 	if handler := gb.matchRoute(MethodGet, "/hello/world"); handler == nil {
 		t.Errorf("input GET /hello/world find nil expecting handler")
+	}
+
+	if handler := gb.matchRoute(MethodGet, "//world"); handler == nil {
+		t.Errorf("input GET //world find nil expecting handler")
 	}
 }
 
