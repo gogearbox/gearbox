@@ -13,6 +13,18 @@ import (
 const (
 	Version = "0.0.2"   // Version of gearbox
 	Name    = "Gearbox" // Name of gearbox
+	// http://patorjk.com/software/taag/#p=display&f=Big%20Money-ne&t=Gearbox
+	banner = `
+  /$$$$$$                                /$$                          
+ /$$__  $$                              | $$                          
+| $$  \__/  /$$$$$$   /$$$$$$   /$$$$$$ | $$$$$$$   /$$$$$$  /$$   /$$
+| $$ /$$$$ /$$__  $$ |____  $$ /$$__  $$| $$__  $$ /$$__  $$|  $$ /$$/
+| $$|_  $$| $$$$$$$$  /$$$$$$$| $$  \__/| $$  \ $$| $$  \ $$ \  $$$$/ 
+| $$  \ $$| $$_____/ /$$__  $$| $$      | $$  | $$| $$  | $$  >$$  $$ 
+|  $$$$$$/|  $$$$$$$|  $$$$$$$| $$      | $$$$$$$/|  $$$$$$/ /$$/\  $$
+ \______/  \_______/ \_______/|__/      |_______/  \______/ |__/  \__/  %s
+Listening on %s
+`
 )
 
 // HTTP methods were copied from net/http.
@@ -141,7 +153,11 @@ func (gb *gearbox) Start(address string) error {
 		return err
 	}
 	gb.address = address
-	return gb.httpServer.Serve(ln)
+	err = gb.httpServer.Serve(ln)
+	if err == nil {
+		log.Printf(banner, Version, gb.address)
+	}
+	return err
 }
 
 // newHTTPServer returns a new instance of fasthttp server
