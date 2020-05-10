@@ -96,6 +96,12 @@ var pingHandler = func(c *fasthttp.RequestCtx) {
 	c.Response.SetBodyString("pong")
 }
 
+// fallbackHandler returns not found status with custom fallback handler in response body
+var fallbackHandler = func(c *fasthttp.RequestCtx) {
+	c.SetStatusCode(StatusNotFound)
+	c.Response.SetBodyString("custom fallback handler")
+}
+
 // registerRoute matches with register route request with available methods and calls it
 func registerRoute(gb Gearbox, method string, path string, handler func(*fasthttp.RequestCtx)) {
 	switch method {
@@ -260,3 +266,55 @@ func TestStop(t *testing.T) {
 	gb.Start("")
 }
 
+// TestRegisterFallback tests router fallback handler
+func TestRegisterFallback(t *testing.T) {
+	// get instance of gearbox
+	gb := new(gearbox)
+	gb.registeredRoutes = make([]*routeInfo, 0)
+
+	// register valid route
+	gb.Get("/ping", pingHandler)
+
+	// register our fallback
+	gb.Fallback(fallbackHandler)
+
+	// start serving
+	startGearbox(gb)
+
+	// One valid request, one invalid
+	testCases := []struct {
+		method     string
+		path       string
+		statusCode int
+		body       string
+	}{
+		{method: MethodGet, path: "/ping", statusCode: StatusOK, body: "pong"},
+		{method: MethodGet, path: "/error", statusCode: StatusNotFound, body: "custom fallback handler"},
+	}
+
+	for _, tc := range testCases {
+		// create and make http request
+		req, _ := http.NewRequest(tc.method, tc.path, nil)
+		response, err := makeRequest(req, gb)
+
+		if err != nil {
+			t.Fatalf("%s(%s): %s", tc.method, tc.path, err.Error())
+		}
+
+		// check status code
+		if response.StatusCode != tc.statusCode {
+			t.Fatalf("%s(%s): returned %d expected %d", tc.method, tc.path, response.StatusCode, tc.statusCode)
+		}
+
+		// read body from response
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("%s(%s): %s", tc.method, tc.path, err.Error())
+		}
+
+		// check response body
+		if string(body) != tc.body {
+			t.Fatalf("%s(%s): returned %s expected %s", tc.method, tc.path, body, tc.body)
+		}
+	}
+}
