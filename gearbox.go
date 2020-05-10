@@ -153,8 +153,8 @@ func (gb *gearbox) newHTTPServer() *fasthttp.Server {
 // Stop serving
 func (gb *gearbox) Stop() error {
 	err := gb.httpServer.Shutdown();
-	if err == nil && gb.address != "" {
-		log.Printf("%s V%s stopped listening on %s", Name,  Version, gb.address)
+	if err == nil && gb.address != "" { // check if shutdown was ok and server had valid address
+		log.Printf("%s stopped listening on %s", Name, gb.address)
 		return nil
 	}
 	return err
