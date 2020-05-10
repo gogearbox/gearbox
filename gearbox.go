@@ -10,9 +10,8 @@ import (
 
 // Exported constants
 const (
-	// Version of gearbox
-	Version = "0.0.2"
-	Name = "Gearbox"
+	Version = "0.0.2" 	// Version of gearbox
+	Name = "Gearbox" // Name of gearbox
 )
 
 // HTTP methods were copied from net/http.
