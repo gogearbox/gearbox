@@ -115,6 +115,7 @@ type gearbox struct {
 	httpServer       *fasthttp.Server
 	routingTreeRoot  *routeNode
 	registeredRoutes []*routeInfo
+	address          string		// server address
 }
 
 // New creates a new instance of gearbox
@@ -136,7 +137,7 @@ func (gb *gearbox) Start(address string) error {
 	if err != nil {
 		return err
 	}
-
+	gb.address = address
 	return gb.httpServer.Serve(ln)
 }
 
@@ -151,7 +152,12 @@ func (gb *gearbox) newHTTPServer() *fasthttp.Server {
 
 // Stop serving
 func (gb *gearbox) Stop() error {
-	return gb.httpServer.Shutdown()
+	err := gb.httpServer.Shutdown();
+	if err == nil && gb.address != "" {
+		fmt.Printf("Gearbox V%s stopped listening on %s", Version, gb.address)
+		return nil
+	}
+	return err
 }
 
 // Get registers an http relevant method
