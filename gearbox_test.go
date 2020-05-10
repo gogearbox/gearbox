@@ -210,7 +210,7 @@ func TestStart(t *testing.T) {
 	gb := New()
 
 	go func() {
-		time.Sleep(3000 * time.Millisecond)
+		time.Sleep(1000 * time.Millisecond)
 		gb.Stop()
 	}()
 
@@ -222,7 +222,7 @@ func TestStartInvalidListener(t *testing.T) {
 	gb := New()
 
 	go func() {
-		time.Sleep(3000 * time.Millisecond)
+		time.Sleep(1000 * time.Millisecond)
 		gb.Stop()
 	}()
 
@@ -239,7 +239,7 @@ func TestStartConflictHandlers(t *testing.T) {
 	gb.Get("/test", handler)
 
 	go func() {
-		time.Sleep(3000 * time.Millisecond)
+		time.Sleep(1000 * time.Millisecond)
 		gb.Stop()
 	}()
 
@@ -253,7 +253,7 @@ func TestStop(t *testing.T) {
 	gb := New()
 
 	go func() {
-		time.Sleep(3000 * time.Millisecond)
+		time.Sleep(1000 * time.Millisecond)
 		gb.Stop()
 	}()
 

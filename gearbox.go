@@ -4,7 +4,7 @@ package gearbox
 import (
 	"fmt"
 	"net"
-
+	"log"
 	"github.com/valyala/fasthttp"
 )
 
@@ -154,7 +154,7 @@ func (gb *gearbox) newHTTPServer() *fasthttp.Server {
 func (gb *gearbox) Stop() error {
 	err := gb.httpServer.Shutdown();
 	if err == nil && gb.address != "" {
-		fmt.Printf("%s V%s stopped listening on %s", Name,  Version, gb.address)
+		log.Printf("%s V%s stopped listening on %s", Name,  Version, gb.address)
 		return nil
 	}
 	return err
