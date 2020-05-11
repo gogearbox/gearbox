@@ -17,7 +17,9 @@
 </p>
 
 
-**gearbox** :gear: is a web framework for building micro services written in Go with a focus on high performance and memory optimization. It's built on [fasthttp](https://github.com/valyala/fasthttp) which is **10x faster** than net/http
+**gearbox** :gear: is a web framework for building micro services written in Go with a focus on high performance and memory optimization. 
+
+Currently, **gearbox** :gear: is **under development (not production ready)** and built on [fasthttp](https://github.com/valyala/fasthttp) which is **up to 10x faster** than net/http
 
 In **gearbox**, we care about peformance and memory which will be used by each method while building things up and how we can improve that. It also takes more time to **research** about each component that will be used and **compare** it with different implementations of other open source web frameworks. It may end up writing our **own components** in an optimized way to achieve our goals
 

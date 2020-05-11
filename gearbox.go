@@ -11,8 +11,8 @@ import (
 
 // Exported constants
 const (
-	Version = "0.0.2"   // Version of gearbox
-	Name    = "Gearbox" // Name of gearbox
+	Version = "0.0.2-beta" // Version of gearbox
+	Name    = "Gearbox"    // Name of gearbox
 	// http://patorjk.com/software/taag/#p=display&f=Big%20Money-ne&t=Gearbox
 	banner = `
   /$$$$$$                                /$$                          
