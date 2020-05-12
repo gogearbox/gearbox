@@ -153,18 +153,21 @@ func (gb *gearbox) Start(address string) error {
 		return err
 	}
 	gb.address = address
-	err = gb.httpServer.Serve(ln)
-	if err == nil {
-		log.Printf(banner, Version, gb.address)
-	}
-	return err
+	log.Printf(banner, Version, gb.address)
+	return gb.httpServer.Serve(ln)
+}
+
+// customLogger Customized logger used to filter logging messages
+type customLogger struct{}
+
+func (dl *customLogger) Printf(format string, args ...interface{}) {
 }
 
 // newHTTPServer returns a new instance of fasthttp server
 func (gb *gearbox) newHTTPServer() *fasthttp.Server {
 	return &fasthttp.Server{
 		Handler:      gb.handler,
-		Logger:       nil,
+		Logger:       &customLogger{},
 		LogAllErrors: false,
 	}
 }
@@ -172,56 +175,59 @@ func (gb *gearbox) newHTTPServer() *fasthttp.Server {
 // Stop serving
 func (gb *gearbox) Stop() error {
 	err := gb.httpServer.Shutdown()
-	if err == nil && gb.address != "" { // check if shutdown was ok and server had valid address
+
+	// check if shutdown was ok and server had valid address
+	if err == nil && gb.address != "" {
 		log.Printf("%s stopped listening on %s", Name, gb.address)
 		return nil
 	}
+
 	return err
 }
 
 // Get registers an http relevant method
 func (gb *gearbox) Get(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute(MethodGet, path, handler)
+	return gb.registerRoute([]byte(MethodGet), []byte(path), handler)
 }
 
 // Head registers an http relevant method
 func (gb *gearbox) Head(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute(MethodHead, path, handler)
+	return gb.registerRoute([]byte(MethodHead), []byte(path), handler)
 }
 
 // Post registers an http relevant method
 func (gb *gearbox) Post(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute(MethodPost, path, handler)
+	return gb.registerRoute([]byte(MethodPost), []byte(path), handler)
 }
 
 // Put registers an http relevant method
 func (gb *gearbox) Put(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute(MethodPut, path, handler)
+	return gb.registerRoute([]byte(MethodPut), []byte(path), handler)
 }
 
 // Patch registers an http relevant method
 func (gb *gearbox) Patch(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute(MethodPatch, path, handler)
+	return gb.registerRoute([]byte(MethodPatch), []byte(path), handler)
 }
 
 // Delete registers an http relevant method
 func (gb *gearbox) Delete(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute(MethodDelete, path, handler)
+	return gb.registerRoute([]byte(MethodDelete), []byte(path), handler)
 }
 
 // Connect registers an http relevant method
 func (gb *gearbox) Connect(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute(MethodConnect, path, handler)
+	return gb.registerRoute([]byte(MethodConnect), []byte(path), handler)
 }
 
 // Options registers an http relevant method
 func (gb *gearbox) Options(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute(MethodOptions, path, handler)
+	return gb.registerRoute([]byte(MethodOptions), []byte(path), handler)
 }
 
 // Trace registers an http relevant method
 func (gb *gearbox) Trace(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute(MethodTrace, path, handler)
+	return gb.registerRoute([]byte(MethodTrace), []byte(path), handler)
 }
 
 // Fallback registers an http handler only fired when no other routes match with request
@@ -232,7 +238,7 @@ func (gb *gearbox) Fallback(handler func(*fasthttp.RequestCtx)) error {
 // Handles all incoming requests and route them to proper handler according to
 // method and path
 func (gb *gearbox) handler(ctx *fasthttp.RequestCtx) {
-	if handler := gb.matchRoute(getString(ctx.Request.Header.Method()), getString(ctx.URI().Path())); handler != nil {
+	if handler := gb.matchRoute(ctx.Request.Header.Method(), ctx.URI().Path()); handler != nil {
 		handler(ctx)
 		return
 	}
