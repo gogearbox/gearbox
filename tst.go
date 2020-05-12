@@ -4,8 +4,8 @@ package gearbox
 
 // tst returns Ternary Search Tree
 type tst interface {
-	Set(word string, value interface{})
-	Get(word string) interface{}
+	Set(word []byte, value interface{})
+	Get(word []byte) interface{}
 }
 
 // Ternary Search Tree node that holds a single character and value if there is
@@ -13,7 +13,7 @@ type tstNode struct {
 	lower  *tstNode
 	higher *tstNode
 	equal  *tstNode
-	key    byte
+	char   byte
 	value  interface{}
 }
 
@@ -23,16 +23,16 @@ func newTST() tst {
 }
 
 // Set adds a value to provided string
-func (t *tstNode) Set(word string, value interface{}) {
-	if len(word) < 1 {
+func (t *tstNode) Set(key []byte, value interface{}) {
+	if len(key) < 1 {
 		return
 	}
-	t.insert(t, word, 0, value)
+	t.insert(t, key, 0, value)
 }
 
 // Get gets the value of provided key if it's existing, otherwise returns nil
-func (t *tstNode) Get(word string) interface{} {
-	length := len(word)
+func (t *tstNode) Get(key []byte) interface{} {
+	length := len(key)
 	if length < 1 || t == nil {
 		return nil
 	}
@@ -40,11 +40,11 @@ func (t *tstNode) Get(word string) interface{} {
 
 	n := t
 	idx := 0
-	key := word[idx]
+	char := key[idx]
 	for n != nil {
-		if key < n.key {
+		if char < n.char {
 			n = n.lower
-		} else if key > n.key {
+		} else if char > n.char {
 			n = n.higher
 		} else {
 			if idx == lastElm {
@@ -53,30 +53,30 @@ func (t *tstNode) Get(word string) interface{} {
 
 			idx++
 			n = n.equal
-			key = word[idx]
+			char = key[idx]
 		}
 	}
 	return nil
 }
 
-// insert is an internal method for inserting a string with value in TST
-func (t *tstNode) insert(n *tstNode, word string, index int, value interface{}) *tstNode {
-	key := word[index]
-	lastElm := len(word) - 1
+// insert is an internal method for inserting a []byte with value in TST
+func (t *tstNode) insert(n *tstNode, key []byte, index int, value interface{}) *tstNode {
+	char := key[index]
+	lastElm := len(key) - 1
 
 	if n == nil {
-		n = &tstNode{key: key}
+		n = &tstNode{char: char}
 	}
 
-	if key < n.key {
-		n.lower = t.insert(n.lower, word, index, value)
-	} else if key > n.key {
-		n.higher = t.insert(n.higher, word, index, value)
+	if char < n.char {
+		n.lower = t.insert(n.lower, key, index, value)
+	} else if char > n.char {
+		n.higher = t.insert(n.higher, key, index, value)
 	} else {
 		if index == lastElm {
 			n.value = value
 		} else {
-			n.equal = t.insert(n.equal, word, index+1, value)
+			n.equal = t.insert(n.equal, key, index+1, value)
 		}
 	}
 

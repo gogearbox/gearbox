@@ -10,23 +10,23 @@ import (
 // ExampleTST tests TST set and get methods
 func ExampleTST() {
 	tst := newTST()
-	tst.Set("user", 1)
-	fmt.Println(tst.Get("user").(int))
-	fmt.Println(tst.Get("us"))
-	fmt.Println(tst.Get("user1"))
-	fmt.Println(tst.Get("not-existing"))
+	tst.Set([]byte("user"), 1)
+	fmt.Println(tst.Get([]byte("user")).(int))
+	fmt.Println(tst.Get([]byte("us")))
+	fmt.Println(tst.Get([]byte("user1")))
+	fmt.Println(tst.Get([]byte("not-existing")))
 
-	tst.Set("account", 5)
-	tst.Set("account", 6)
-	fmt.Println(tst.Get("account").(int))
+	tst.Set([]byte("account"), 5)
+	tst.Set([]byte("account"), 6)
+	fmt.Println(tst.Get([]byte("account")).(int))
 
-	tst.Set("acc@unt", 12)
-	fmt.Println(tst.Get("acc@unt").(int))
+	tst.Set([]byte("acc@unt"), 12)
+	fmt.Println(tst.Get([]byte("acc@unt")).(int))
 
-	tst.Set("حساب", 15)
-	fmt.Println(tst.Get("حساب").(int))
-	tst.Set("", 14)
-	fmt.Println(tst.Get(""))
+	tst.Set([]byte("حساب"), 15)
+	fmt.Println(tst.Get([]byte("حساب")).(int))
+	tst.Set([]byte(""), 14)
+	fmt.Println(tst.Get([]byte("")))
 	// Output:
 	// 1
 	// <nil>
@@ -38,25 +38,25 @@ func ExampleTST() {
 	// <nil>
 }
 
-// RandStringBytes generates random string from English letters
-func RandStringBytes() string {
+// RandBytes generates random string from English letters
+func RandBytes() []byte {
 	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	b := make([]byte, rand.Intn(100))
 	for i := range b {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
-	return string(b)
+	return b
 }
 
 func BenchmarkTSTLookup(b *testing.B) {
 	tst := newTST()
 	rand.Seed(time.Now().UnixNano())
 	for n := 0; n < rand.Intn(2000); n++ {
-		tst.Set(RandStringBytes(), rand.Intn(10000))
+		tst.Set(RandBytes(), rand.Intn(10000))
 	}
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		tst.Get("user")
+		tst.Get([]byte("user"))
 	}
 }

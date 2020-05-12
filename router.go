@@ -1,23 +1,23 @@
 package gearbox
 
 import (
+	"bytes"
 	"fmt"
-	"strings"
 
 	"github.com/valyala/fasthttp"
 )
 
 type routeNode struct {
-	Name     string
-	Method   string
+	Name     []byte
+	Method   []byte
 	MatchAll bool
 	Methods  tst
 	Children tst
 }
 
 type routeInfo struct {
-	Method  string
-	Path    string
+	Method  []byte
+	Path    []byte
 	Handler func(*fasthttp.RequestCtx)
 }
 
@@ -26,7 +26,7 @@ type routerFallback struct {
 }
 
 // validateRoutePath makes sure that path complies with path's rules
-func validateRoutePath(path string) error {
+func validateRoutePath(path []byte) error {
 	// Check length of the path
 	length := len(path)
 	if length == 0 {
@@ -39,7 +39,7 @@ func validateRoutePath(path string) error {
 	}
 
 	// Make sure that star is in the end of path if it's existing
-	starIndex := strings.Index(path, "*")
+	starIndex := bytes.Index(path, []byte("*"))
 	if starIndex > 0 && starIndex < length-1 && path[starIndex-1] == '/' {
 		return fmt.Errorf("* must be in the end of path")
 	}
@@ -48,7 +48,7 @@ func validateRoutePath(path string) error {
 }
 
 // registerRoute registers handler with method and path
-func (gb *gearbox) registerRoute(method string, path string, handler func(*fasthttp.RequestCtx)) error {
+func (gb *gearbox) registerRoute(method []byte, path []byte, handler func(*fasthttp.RequestCtx)) error {
 	// Handler is not provided
 	if handler == nil {
 		return fmt.Errorf("route %s with method %s does not contain any handlers", path, method)
@@ -80,7 +80,7 @@ func (gb *gearbox) registerFallback(handler func(*fasthttp.RequestCtx)) error {
 }
 
 // createEmptyRouteNode creates a new route node with name
-func createEmptyRouteNode(name string) *routeNode {
+func createEmptyRouteNode(name []byte) *routeNode {
 	return &routeNode{
 		Name:     name,
 		Children: newTST(),
@@ -92,23 +92,26 @@ func createEmptyRouteNode(name string) *routeNode {
 // constructRoutingTree constructs routing tree according to provided routes
 func (gb *gearbox) constructRoutingTree() error {
 	// Firstly, create root node
-	gb.routingTreeRoot = createEmptyRouteNode("root")
+	gb.routingTreeRoot = createEmptyRouteNode([]byte("root"))
 
 	for _, route := range gb.registeredRoutes {
 		currentNode := gb.routingTreeRoot
 
 		// Split path into slices of keywords
-		keywords := strings.Split(route.Path, "/")
+		keywords := bytes.Split(route.Path, []byte("/"))
+
 		keywordsLen := len(keywords)
 		for i := 1; i < keywordsLen; i++ {
 			keyword := keywords[i]
 
-			// Do not create node if keyword is empty or star
-			if keyword == "" || keyword == "*" {
-				// Set MatchAll flag for current node
-				if keyword == "*" {
-					currentNode.MatchAll = true
-				}
+			// Do not create node if keyword is empty
+			if len(keyword) == 0 {
+				continue
+			}
+
+			// Set MatchAll flag for current node
+			if keyword[0] == '*' {
+				currentNode.MatchAll = true
 				continue
 			}
 
@@ -134,7 +137,7 @@ func (gb *gearbox) constructRoutingTree() error {
 }
 
 // matchRoute matches provided method and path with handler if it's existing
-func (gb *gearbox) matchRoute(method string, path string) func(*fasthttp.RequestCtx) {
+func (gb *gearbox) matchRoute(method []byte, path []byte) func(*fasthttp.RequestCtx) {
 	if handler := gb.matchRouteAgainstRegistered(method, path); handler != nil {
 		return handler
 	}
@@ -146,12 +149,22 @@ func (gb *gearbox) matchRoute(method string, path string) func(*fasthttp.Request
 	return nil
 }
 
-func (gb *gearbox) matchRouteAgainstRegistered(method string, path string) func(*fasthttp.RequestCtx) {
+// getKeywordEnd gets index of last byte before next '/' starting from index start
+func getKeywordEnd(start int, path *[]byte, len int) int {
+	for i := start; i < len; i++ {
+		if (*path)[i] == '/' {
+			return i
+		}
+	}
+	return len
+}
+
+func (gb *gearbox) matchRouteAgainstRegistered(method []byte, path []byte) func(*fasthttp.RequestCtx) {
 	// Start with root node
 	currentNode := gb.routingTreeRoot
 
 	// Return if root is empty
-	if currentNode == nil {
+	if currentNode == nil || len(path) == 0 || path[0] != '/' {
 		return nil
 	}
 
@@ -162,14 +175,17 @@ func (gb *gearbox) matchRouteAgainstRegistered(method string, path string) func(
 		lastMatchAll = currentNode
 	}
 
-	// Split path into slices of keywords
-	keywords := strings.Split(path, "/")
-	keywordsLen := len(keywords)
-	for i := 1; i < keywordsLen; i++ {
-		keyword := keywords[i]
+	pathLen := len(path)
+	lastPathByte := pathLen - 1
+
+	// Start from the second byte as first is '/'
+	start := 1
+	for end := getKeywordEnd(start, &path, pathLen); start < lastPathByte; end = getKeywordEnd(start, &path, pathLen) {
+		keyword := path[start:end]
+		start = end + 1
 
 		// Ignore empty keywords
-		if keyword == "" {
+		if len(keyword) == 0 {
 			continue
 		}
 
