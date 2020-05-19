@@ -131,6 +131,7 @@ type HandlerFunc func(ctx *Context)
 // HandlersChain defines a HandlerFunc array.
 type HandlersChain []HandlerFunc
 
+// Context defines the current context of request and handlers/middlewares to execute
 type Context struct {
 	*fasthttp.RequestCtx
 	handlers HandlersChain
@@ -257,9 +258,10 @@ func (gb *gearbox) Use(middlewares ...HandlerFunc) {
 	gb.handlers = append(gb.handlers, middlewares...)
 }
 
-// Next
+// Next function is used to successfully pass from current middleware to next middleware.
+// if the middleware thinks it's okay to pass it.
 func (ctx *Context) Next() {
-	ctx.index += 1
+	ctx.index++
 	ctx.handlers[ctx.index](ctx)
 }
 
