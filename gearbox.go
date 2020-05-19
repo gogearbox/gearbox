@@ -122,6 +122,7 @@ type Gearbox interface {
 	Options(path string, handlers ...HandlerFunc) error
 	Trace(path string, handlers ...HandlerFunc) error
 	Fallback(handlers ...HandlerFunc) error
+	Use(middlewares ...HandlerFunc)
 }
 
 // HandlerFunc defines the handler used by gin middleware as return value.
@@ -246,6 +247,20 @@ func (gb *gearbox) Trace(path string, handlers ...HandlerFunc) error {
 // Fallback registers an http handler only fired when no other routes match with request
 func (gb *gearbox) Fallback(handlers ...HandlerFunc) error {
 	return gb.registerFallback(handlers)
+}
+
+// Use attaches a global middleware to the gearbox object.
+// included in the handlers chain for all matched requests.
+// it will always be executed before the handler and/or middlewares for the matched request
+// For example, this is the right place for a logger or some security check or permission checking.
+func (gb *gearbox) Use(middlewares ...HandlerFunc) {
+	gb.handlers = append(gb.handlers, middlewares...)
+}
+
+// Next
+func (ctx *Context) Next() {
+	ctx.index += 1
+	ctx.handlers[ctx.index](ctx)
 }
 
 // Handles all incoming requests and route them to proper handler according to
