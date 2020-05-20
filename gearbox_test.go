@@ -84,27 +84,27 @@ func makeRequest(request *http.Request, gb *gearbox) (*http.Response, error) {
 }
 
 // handler just an empty handler
-var handler = func(c *Context) {}
+var handler = func(ctx *Context) {}
 
 // unAuthorizedHandler sets status unauthorized in response
-var unAuthorizedHandler = func(c *Context) {
-	c.SetStatusCode(StatusUnauthorized)
+var unAuthorizedHandler = func(ctx *Context) {
+	ctx.SetStatusCode(StatusUnauthorized)
 }
 
 // pingHandler returns string pong in response body
-var pingHandler = func(c *Context) {
-	c.Response.SetBodyString("pong")
+var pingHandler = func(ctx *Context) {
+	ctx.Response.SetBodyString("pong")
 }
 
 // fallbackHandler returns not found status with custom fallback handler in response body
-var fallbackHandler = func(c *Context) {
-	c.SetStatusCode(StatusNotFound)
-	c.Response.SetBodyString("custom fallback handler")
+var fallbackHandler = func(ctx *Context) {
+	ctx.SetStatusCode(StatusNotFound)
+	ctx.Response.SetBodyString("custom fallback handler")
 }
 
 // emptyMiddleware does not stop the request and passes it to the next middleware/handler
-var emptyMiddleware = func(c *Context) {
-	c.Next()
+var emptyMiddleware = func(ctx *Context) {
+	ctx.Next()
 }
 
 // registerRoute matches with register route request with available methods and calls it
