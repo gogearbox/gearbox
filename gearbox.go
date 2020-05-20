@@ -125,19 +125,6 @@ type Gearbox interface {
 	Use(middlewares ...HandlerFunc)
 }
 
-// HandlerFunc defines the handler used by gin middleware as return value.
-type HandlerFunc func(ctx *Context)
-
-// HandlersChain defines a HandlerFunc array.
-type HandlersChain []HandlerFunc
-
-// Context defines the current context of request and handlers/middlewares to execute
-type Context struct {
-	*fasthttp.RequestCtx
-	handlers HandlersChain
-	index    int
-}
-
 // gearbox implements Gearbox interface
 type gearbox struct {
 	httpServer         *fasthttp.Server
@@ -256,13 +243,6 @@ func (gb *gearbox) Fallback(handlers ...HandlerFunc) error {
 // For example, this is the right place for a logger or some security check or permission checking.
 func (gb *gearbox) Use(middlewares ...HandlerFunc) {
 	gb.handlers = append(gb.handlers, middlewares...)
-}
-
-// Next function is used to successfully pass from current middleware to next middleware.
-// if the middleware thinks it's okay to pass it.
-func (ctx *Context) Next() {
-	ctx.index++
-	ctx.handlers[ctx.index](ctx)
 }
 
 // Handles all incoming requests and route them to proper handler according to
