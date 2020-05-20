@@ -10,7 +10,7 @@ func Test_Next(t *testing.T) {
 	// testing routes
 	routes := []struct {
 		path       string
-		middleware HandlerFunc
+		middleware handlerFunc
 	}{
 		{path: "/ok", middleware: emptyMiddleware},
 		{path: "/unauthorized", middleware: unAuthorizedHandler},

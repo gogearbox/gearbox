@@ -49,7 +49,7 @@ func TestCreateEmptyNode(t *testing.T) {
 var emptyHandler = func(ctx *Context) {}
 
 // empty Handlers chain is just an empty array
-var emptyHandlersChain = HandlersChain{}
+var emptyHandlersChain = handlersChain{}
 
 // TestRegisterRoute tests registering routes after validating it
 func TestRegisterRoute(t *testing.T) {
@@ -57,7 +57,7 @@ func TestRegisterRoute(t *testing.T) {
 	tests := []struct {
 		method  []byte
 		path    []byte
-		handler HandlersChain
+		handler handlersChain
 		isErr   bool
 	}{
 		{method: []byte(MethodPut), path: []byte("/admin/welcome"), handler: emptyHandlersChain, isErr: false},
@@ -124,7 +124,7 @@ func TestConstructRoutingTree(t *testing.T) {
 	routes := []struct {
 		method  []byte
 		path    []byte
-		handler HandlersChain
+		handler handlersChain
 	}{
 		{method: []byte(MethodGet), path: []byte("/articles/search"), handler: emptyHandlersChain},
 		{method: []byte(MethodGet), path: []byte("/articles/test"), handler: emptyHandlersChain},

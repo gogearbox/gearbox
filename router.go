@@ -16,11 +16,11 @@ type routeNode struct {
 type routeInfo struct {
 	Method   []byte
 	Path     []byte
-	Handlers HandlersChain
+	Handlers handlersChain
 }
 
 type routerFallback struct {
-	Handlers HandlersChain
+	Handlers handlersChain
 }
 
 // validateRoutePath makes sure that path complies with path's rules
@@ -46,7 +46,7 @@ func validateRoutePath(path []byte) error {
 }
 
 // registerRoute registers handler with method and path
-func (gb *gearbox) registerRoute(method []byte, path []byte, handlers HandlersChain) error {
+func (gb *gearbox) registerRoute(method []byte, path []byte, handlers handlersChain) error {
 	// Handler is not provided
 	if handlers == nil {
 		return fmt.Errorf("route %s with method %s does not contain any handlers", path, method)
@@ -67,7 +67,7 @@ func (gb *gearbox) registerRoute(method []byte, path []byte, handlers HandlersCh
 }
 
 // registerFallback registers a single handler that will match only if all other routes fail to match
-func (gb *gearbox) registerFallback(handlers HandlersChain) error {
+func (gb *gearbox) registerFallback(handlers handlersChain) error {
 	// Handler is not provided
 	if handlers == nil {
 		return fmt.Errorf("fallback does not contain a handler")
@@ -135,7 +135,7 @@ func (gb *gearbox) constructRoutingTree() error {
 }
 
 // matchRoute matches provided method and path with handler if it's existing
-func (gb *gearbox) matchRoute(method []byte, path []byte) HandlersChain {
+func (gb *gearbox) matchRoute(method []byte, path []byte) handlersChain {
 	if handlers := gb.matchRouteAgainstRegistered(method, path); handlers != nil {
 		return handlers
 	}
@@ -157,7 +157,7 @@ func getKeywordEnd(start int, path *[]byte, len int) int {
 	return len
 }
 
-func (gb *gearbox) matchRouteAgainstRegistered(method []byte, path []byte) HandlersChain {
+func (gb *gearbox) matchRouteAgainstRegistered(method []byte, path []byte) handlersChain {
 	// Start with root node
 	currentNode := gb.routingTreeRoot
 
@@ -207,7 +207,7 @@ func (gb *gearbox) matchRouteAgainstRegistered(method []byte, path []byte) Handl
 		}
 
 		// Try to get handler for provided method in lastMatchAll node and return it
-		if routeHandler, ok := lastMatchAll.Methods.Get(method).(HandlersChain); ok {
+		if routeHandler, ok := lastMatchAll.Methods.Get(method).(handlersChain); ok {
 			return routeHandler
 		}
 
@@ -217,7 +217,7 @@ func (gb *gearbox) matchRouteAgainstRegistered(method []byte, path []byte) Handl
 
 	// Matching with path is done and trying get handler for provided method in
 	// currentNode, otherwise return nil
-	if routeHandler, ok := currentNode.Methods.Get(method).(HandlersChain); ok {
+	if routeHandler, ok := currentNode.Methods.Get(method).(handlersChain); ok {
 		return routeHandler
 	}
 	return nil

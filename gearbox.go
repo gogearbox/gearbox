@@ -112,17 +112,17 @@ const (
 type Gearbox interface {
 	Start(address string) error
 	Stop() error
-	Get(path string, handlers ...HandlerFunc) error
-	Head(path string, handlers ...HandlerFunc) error
-	Post(path string, handlers ...HandlerFunc) error
-	Put(path string, handlers ...HandlerFunc) error
-	Patch(path string, handlers ...HandlerFunc) error
-	Delete(path string, handlers ...HandlerFunc) error
-	Connect(path string, handlers ...HandlerFunc) error
-	Options(path string, handlers ...HandlerFunc) error
-	Trace(path string, handlers ...HandlerFunc) error
-	Fallback(handlers ...HandlerFunc) error
-	Use(middlewares ...HandlerFunc)
+	Get(path string, handlers ...handlerFunc) error
+	Head(path string, handlers ...handlerFunc) error
+	Post(path string, handlers ...handlerFunc) error
+	Put(path string, handlers ...handlerFunc) error
+	Patch(path string, handlers ...handlerFunc) error
+	Delete(path string, handlers ...handlerFunc) error
+	Connect(path string, handlers ...handlerFunc) error
+	Options(path string, handlers ...handlerFunc) error
+	Trace(path string, handlers ...handlerFunc) error
+	Fallback(handlers ...handlerFunc) error
+	Use(middlewares ...handlerFunc)
 }
 
 // gearbox implements Gearbox interface
@@ -131,7 +131,7 @@ type gearbox struct {
 	routingTreeRoot    *routeNode
 	registeredRoutes   []*routeInfo
 	address            string // server address
-	handlers           HandlersChain
+	handlers           handlersChain
 	registeredFallback *routerFallback
 }
 
@@ -188,52 +188,52 @@ func (gb *gearbox) Stop() error {
 }
 
 // Get registers an http relevant method
-func (gb *gearbox) Get(path string, handlers ...HandlerFunc) error {
+func (gb *gearbox) Get(path string, handlers ...handlerFunc) error {
 	return gb.registerRoute([]byte(MethodGet), []byte(path), handlers)
 }
 
 // Head registers an http relevant method
-func (gb *gearbox) Head(path string, handlers ...HandlerFunc) error {
+func (gb *gearbox) Head(path string, handlers ...handlerFunc) error {
 	return gb.registerRoute([]byte(MethodHead), []byte(path), handlers)
 }
 
 // Post registers an http relevant method
-func (gb *gearbox) Post(path string, handlers ...HandlerFunc) error {
+func (gb *gearbox) Post(path string, handlers ...handlerFunc) error {
 	return gb.registerRoute([]byte(MethodPost), []byte(path), handlers)
 }
 
 // Put registers an http relevant method
-func (gb *gearbox) Put(path string, handlers ...HandlerFunc) error {
+func (gb *gearbox) Put(path string, handlers ...handlerFunc) error {
 	return gb.registerRoute([]byte(MethodPut), []byte(path), handlers)
 }
 
 // Patch registers an http relevant method
-func (gb *gearbox) Patch(path string, handlers ...HandlerFunc) error {
+func (gb *gearbox) Patch(path string, handlers ...handlerFunc) error {
 	return gb.registerRoute([]byte(MethodPatch), []byte(path), handlers)
 }
 
 // Delete registers an http relevant method
-func (gb *gearbox) Delete(path string, handlers ...HandlerFunc) error {
+func (gb *gearbox) Delete(path string, handlers ...handlerFunc) error {
 	return gb.registerRoute([]byte(MethodDelete), []byte(path), handlers)
 }
 
 // Connect registers an http relevant method
-func (gb *gearbox) Connect(path string, handlers ...HandlerFunc) error {
+func (gb *gearbox) Connect(path string, handlers ...handlerFunc) error {
 	return gb.registerRoute([]byte(MethodConnect), []byte(path), handlers)
 }
 
 // Options registers an http relevant method
-func (gb *gearbox) Options(path string, handlers ...HandlerFunc) error {
+func (gb *gearbox) Options(path string, handlers ...handlerFunc) error {
 	return gb.registerRoute([]byte(MethodOptions), []byte(path), handlers)
 }
 
 // Trace registers an http relevant method
-func (gb *gearbox) Trace(path string, handlers ...HandlerFunc) error {
+func (gb *gearbox) Trace(path string, handlers ...handlerFunc) error {
 	return gb.registerRoute([]byte(MethodTrace), []byte(path), handlers)
 }
 
 // Fallback registers an http handler only fired when no other routes match with request
-func (gb *gearbox) Fallback(handlers ...HandlerFunc) error {
+func (gb *gearbox) Fallback(handlers ...handlerFunc) error {
 	return gb.registerFallback(handlers)
 }
 
@@ -241,7 +241,7 @@ func (gb *gearbox) Fallback(handlers ...HandlerFunc) error {
 // included in the handlers chain for all matched requests.
 // it will always be executed before the handler and/or middlewares for the matched request
 // For example, this is the right place for a logger or some security check or permission checking.
-func (gb *gearbox) Use(middlewares ...HandlerFunc) {
+func (gb *gearbox) Use(middlewares ...handlerFunc) {
 	gb.handlers = append(gb.handlers, middlewares...)
 }
 
