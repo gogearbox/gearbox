@@ -112,16 +112,17 @@ const (
 type Gearbox interface {
 	Start(address string) error
 	Stop() error
-	Get(path string, handler func(*fasthttp.RequestCtx)) error
-	Head(path string, handler func(*fasthttp.RequestCtx)) error
-	Post(path string, handler func(*fasthttp.RequestCtx)) error
-	Put(path string, handler func(*fasthttp.RequestCtx)) error
-	Patch(path string, handler func(*fasthttp.RequestCtx)) error
-	Delete(path string, handler func(*fasthttp.RequestCtx)) error
-	Connect(path string, handler func(*fasthttp.RequestCtx)) error
-	Options(path string, handler func(*fasthttp.RequestCtx)) error
-	Trace(path string, handler func(*fasthttp.RequestCtx)) error
-	Fallback(handler func(*fasthttp.RequestCtx)) error
+	Get(path string, handlers ...handlerFunc) error
+	Head(path string, handlers ...handlerFunc) error
+	Post(path string, handlers ...handlerFunc) error
+	Put(path string, handlers ...handlerFunc) error
+	Patch(path string, handlers ...handlerFunc) error
+	Delete(path string, handlers ...handlerFunc) error
+	Connect(path string, handlers ...handlerFunc) error
+	Options(path string, handlers ...handlerFunc) error
+	Trace(path string, handlers ...handlerFunc) error
+	Fallback(handlers ...handlerFunc) error
+	Use(middlewares ...handlerFunc)
 }
 
 // gearbox implements Gearbox interface
@@ -130,6 +131,7 @@ type gearbox struct {
 	routingTreeRoot    *routeNode
 	registeredRoutes   []*routeInfo
 	address            string // server address
+	handlers           handlersChain
 	registeredFallback *routerFallback
 }
 
@@ -145,7 +147,7 @@ func New() Gearbox {
 func (gb *gearbox) Start(address string) error {
 	// Construct routing tree
 	if err := gb.constructRoutingTree(); err != nil {
-		return fmt.Errorf("Unable to construct routing %s", err.Error())
+		return fmt.Errorf("unable to construct routing %s", err.Error())
 	}
 
 	ln, err := net.Listen("tcp4", address)
@@ -186,60 +188,73 @@ func (gb *gearbox) Stop() error {
 }
 
 // Get registers an http relevant method
-func (gb *gearbox) Get(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute([]byte(MethodGet), []byte(path), handler)
+func (gb *gearbox) Get(path string, handlers ...handlerFunc) error {
+	return gb.registerRoute([]byte(MethodGet), []byte(path), handlers)
 }
 
 // Head registers an http relevant method
-func (gb *gearbox) Head(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute([]byte(MethodHead), []byte(path), handler)
+func (gb *gearbox) Head(path string, handlers ...handlerFunc) error {
+	return gb.registerRoute([]byte(MethodHead), []byte(path), handlers)
 }
 
 // Post registers an http relevant method
-func (gb *gearbox) Post(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute([]byte(MethodPost), []byte(path), handler)
+func (gb *gearbox) Post(path string, handlers ...handlerFunc) error {
+	return gb.registerRoute([]byte(MethodPost), []byte(path), handlers)
 }
 
 // Put registers an http relevant method
-func (gb *gearbox) Put(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute([]byte(MethodPut), []byte(path), handler)
+func (gb *gearbox) Put(path string, handlers ...handlerFunc) error {
+	return gb.registerRoute([]byte(MethodPut), []byte(path), handlers)
 }
 
 // Patch registers an http relevant method
-func (gb *gearbox) Patch(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute([]byte(MethodPatch), []byte(path), handler)
+func (gb *gearbox) Patch(path string, handlers ...handlerFunc) error {
+	return gb.registerRoute([]byte(MethodPatch), []byte(path), handlers)
 }
 
 // Delete registers an http relevant method
-func (gb *gearbox) Delete(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute([]byte(MethodDelete), []byte(path), handler)
+func (gb *gearbox) Delete(path string, handlers ...handlerFunc) error {
+	return gb.registerRoute([]byte(MethodDelete), []byte(path), handlers)
 }
 
 // Connect registers an http relevant method
-func (gb *gearbox) Connect(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute([]byte(MethodConnect), []byte(path), handler)
+func (gb *gearbox) Connect(path string, handlers ...handlerFunc) error {
+	return gb.registerRoute([]byte(MethodConnect), []byte(path), handlers)
 }
 
 // Options registers an http relevant method
-func (gb *gearbox) Options(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute([]byte(MethodOptions), []byte(path), handler)
+func (gb *gearbox) Options(path string, handlers ...handlerFunc) error {
+	return gb.registerRoute([]byte(MethodOptions), []byte(path), handlers)
 }
 
 // Trace registers an http relevant method
-func (gb *gearbox) Trace(path string, handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerRoute([]byte(MethodTrace), []byte(path), handler)
+func (gb *gearbox) Trace(path string, handlers ...handlerFunc) error {
+	return gb.registerRoute([]byte(MethodTrace), []byte(path), handlers)
 }
 
 // Fallback registers an http handler only fired when no other routes match with request
-func (gb *gearbox) Fallback(handler func(*fasthttp.RequestCtx)) error {
-	return gb.registerFallback(handler)
+func (gb *gearbox) Fallback(handlers ...handlerFunc) error {
+	return gb.registerFallback(handlers)
+}
+
+// Use attaches a global middleware to the gearbox object.
+// included in the handlers chain for all matched requests.
+// it will always be executed before the handler and/or middlewares for the matched request
+// For example, this is the right place for a logger or some security check or permission checking.
+func (gb *gearbox) Use(middlewares ...handlerFunc) {
+	gb.handlers = append(gb.handlers, middlewares...)
 }
 
 // Handles all incoming requests and route them to proper handler according to
 // method and path
 func (gb *gearbox) handler(ctx *fasthttp.RequestCtx) {
-	if handler := gb.matchRoute(ctx.Request.Header.Method(), ctx.URI().Path()); handler != nil {
-		handler(ctx)
+	if handlers := gb.matchRoute(ctx.Request.Header.Method(), ctx.URI().Path()); handlers != nil {
+		context := Context{
+			RequestCtx: ctx,
+			handlers:   append(gb.handlers, handlers...),
+			index:      0,
+		}
+		context.handlers[0](&context)
 		return
 	}
 

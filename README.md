@@ -47,21 +47,64 @@ go get -u github.com/abahmed/gearbox
 package main
 
 import (
-  "github.com/abahmed/gearbox"
-  "github.com/valyala/fasthttp"
+	"github.com/abahmed/gearbox"
 )
 
 func main() {
-  // Setup gearbox
-  gearbox := gearbox.New()
-  
-  // Define your handlers
-  gearbox.Get("/hello", func(ctx *fasthttp.RequestCtx) {
-	ctx.Response.SetBodyString("Hello World!")
-  })
+	// Setup gearbox
+	gb := gearbox.New()
 
-  // Start service
-  gearbox.Start(":3000")
+	// Define your handlers
+	gb.Get("/hello", func(ctx *gearbox.Context) {
+		ctx.Response.SetBodyString("Hello World!")
+	})
+
+	// Start service
+	gb.Start(":3000")
+}
+```
+
+#### Using middlewares for the whole application
+```go
+package main
+
+import (
+	"github.com/abahmed/gearbox"
+	"log"
+)
+
+func main() {
+	// Setup gearbox
+	gb := gearbox.New()
+
+	// create a logger middleware
+	logMiddleware := func(ctx *gearbox.Context) {
+		log.Printf(ctx.String())
+		ctx.Next() // Next is what allows the request to continue to the next middleware/handler
+	}
+
+	// create an unauthorized middleware
+	unAuthorizedMiddleware := func(ctx *gearbox.Context) {
+		ctx.SetStatusCode(401) // unauthorized status code
+		ctx.Response.SetBodyString("You are unauthorized to access this page!")
+	}
+
+	// Register the log middleware for all requests
+	gb.Use(logMiddleware)
+
+	// Define your handlers
+	gb.Get("/hello", func(ctx *gearbox.Context) {
+		ctx.Response.SetBodyString("Hello World!")
+	})
+    
+    // define a route with unAuthorizedMiddleware as the middleware
+    // you can define as many middlewares as you want and have the handler as the last argument
+	gb.Get("/protected", unAuthorizedMiddleware, func(ctx *gearbox.Context) {
+		ctx.Response.SetBodyString("You accessed a protected page")
+	})
+
+	// Start service
+	gb.Start(":3000")
 }
 ```
 

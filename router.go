@@ -3,8 +3,6 @@ package gearbox
 import (
 	"bytes"
 	"fmt"
-
-	"github.com/valyala/fasthttp"
 )
 
 type routeNode struct {
@@ -16,13 +14,13 @@ type routeNode struct {
 }
 
 type routeInfo struct {
-	Method  []byte
-	Path    []byte
-	Handler func(*fasthttp.RequestCtx)
+	Method   []byte
+	Path     []byte
+	Handlers handlersChain
 }
 
 type routerFallback struct {
-	Handler func(*fasthttp.RequestCtx)
+	Handlers handlersChain
 }
 
 // validateRoutePath makes sure that path complies with path's rules
@@ -48,9 +46,9 @@ func validateRoutePath(path []byte) error {
 }
 
 // registerRoute registers handler with method and path
-func (gb *gearbox) registerRoute(method []byte, path []byte, handler func(*fasthttp.RequestCtx)) error {
+func (gb *gearbox) registerRoute(method []byte, path []byte, handlers handlersChain) error {
 	// Handler is not provided
-	if handler == nil {
+	if handlers == nil {
 		return fmt.Errorf("route %s with method %s does not contain any handlers", path, method)
 	}
 
@@ -61,21 +59,21 @@ func (gb *gearbox) registerRoute(method []byte, path []byte, handler func(*fasth
 
 	// Add route to registered routes
 	gb.registeredRoutes = append(gb.registeredRoutes, &routeInfo{
-		Path:    path,
-		Method:  method,
-		Handler: handler,
+		Path:     path,
+		Method:   method,
+		Handlers: handlers,
 	})
 	return nil
 }
 
 // registerFallback registers a single handler that will match only if all other routes fail to match
-func (gb *gearbox) registerFallback(handler func(*fasthttp.RequestCtx)) error {
+func (gb *gearbox) registerFallback(handlers handlersChain) error {
 	// Handler is not provided
-	if handler == nil {
+	if handlers == nil {
 		return fmt.Errorf("fallback does not contain a handler")
 	}
 
-	gb.registeredFallback = &routerFallback{Handler: handler}
+	gb.registeredFallback = &routerFallback{Handlers: handlers}
 	return nil
 }
 
@@ -131,19 +129,19 @@ func (gb *gearbox) constructRoutingTree() error {
 		}
 
 		// Save handler to route's method for current node
-		currentNode.Methods.Set(route.Method, route.Handler)
+		currentNode.Methods.Set(route.Method, route.Handlers)
 	}
 	return nil
 }
 
 // matchRoute matches provided method and path with handler if it's existing
-func (gb *gearbox) matchRoute(method []byte, path []byte) func(*fasthttp.RequestCtx) {
-	if handler := gb.matchRouteAgainstRegistered(method, path); handler != nil {
-		return handler
+func (gb *gearbox) matchRoute(method []byte, path []byte) handlersChain {
+	if handlers := gb.matchRouteAgainstRegistered(method, path); handlers != nil {
+		return handlers
 	}
 
-	if gb.registeredFallback != nil && gb.registeredFallback.Handler != nil {
-		return gb.registeredFallback.Handler
+	if gb.registeredFallback != nil && gb.registeredFallback.Handlers != nil {
+		return gb.registeredFallback.Handlers
 	}
 
 	return nil
@@ -159,7 +157,7 @@ func getKeywordEnd(start int, path *[]byte, len int) int {
 	return len
 }
 
-func (gb *gearbox) matchRouteAgainstRegistered(method []byte, path []byte) func(*fasthttp.RequestCtx) {
+func (gb *gearbox) matchRouteAgainstRegistered(method []byte, path []byte) handlersChain {
 	// Start with root node
 	currentNode := gb.routingTreeRoot
 
@@ -209,7 +207,7 @@ func (gb *gearbox) matchRouteAgainstRegistered(method []byte, path []byte) func(
 		}
 
 		// Try to get handler for provided method in lastMatchAll node and return it
-		if routeHandler, ok := lastMatchAll.Methods.Get(method).(func(*fasthttp.RequestCtx)); ok {
+		if routeHandler, ok := lastMatchAll.Methods.Get(method).(handlersChain); ok {
 			return routeHandler
 		}
 
@@ -219,7 +217,7 @@ func (gb *gearbox) matchRouteAgainstRegistered(method []byte, path []byte) func(
 
 	// Matching with path is done and trying get handler for provided method in
 	// currentNode, otherwise return nil
-	if routeHandler, ok := currentNode.Methods.Get(method).(func(*fasthttp.RequestCtx)); ok {
+	if routeHandler, ok := currentNode.Methods.Get(method).(handlersChain); ok {
 		return routeHandler
 	}
 	return nil

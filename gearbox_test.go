@@ -84,26 +84,31 @@ func makeRequest(request *http.Request, gb *gearbox) (*http.Response, error) {
 }
 
 // handler just an empty handler
-var handler = func(c *fasthttp.RequestCtx) {}
+var handler = func(ctx *Context) {}
 
 // unAuthorizedHandler sets status unauthorized in response
-var unAuthorizedHandler = func(c *fasthttp.RequestCtx) {
-	c.SetStatusCode(StatusUnauthorized)
+var unAuthorizedHandler = func(ctx *Context) {
+	ctx.SetStatusCode(StatusUnauthorized)
 }
 
 // pingHandler returns string pong in response body
-var pingHandler = func(c *fasthttp.RequestCtx) {
-	c.Response.SetBodyString("pong")
+var pingHandler = func(ctx *Context) {
+	ctx.Response.SetBodyString("pong")
 }
 
 // fallbackHandler returns not found status with custom fallback handler in response body
-var fallbackHandler = func(c *fasthttp.RequestCtx) {
-	c.SetStatusCode(StatusNotFound)
-	c.Response.SetBodyString("custom fallback handler")
+var fallbackHandler = func(ctx *Context) {
+	ctx.SetStatusCode(StatusNotFound)
+	ctx.Response.SetBodyString("custom fallback handler")
+}
+
+// emptyMiddleware does not stop the request and passes it to the next middleware/handler
+var emptyMiddleware = func(ctx *Context) {
+	ctx.Next()
 }
 
 // registerRoute matches with register route request with available methods and calls it
-func registerRoute(gb Gearbox, method string, path string, handler func(*fasthttp.RequestCtx)) {
+func registerRoute(gb Gearbox, method string, path string, handler func(ctx *Context)) {
 	switch method {
 	case MethodGet:
 		gb.Get(path, handler)
@@ -133,7 +138,7 @@ func TestMethods(t *testing.T) {
 	routes := []struct {
 		method  string
 		path    string
-		handler func(*fasthttp.RequestCtx)
+		handler func(ctx *Context)
 	}{
 		{method: MethodGet, path: "/articles/search", handler: emptyHandler},
 		{method: MethodHead, path: "/articles/test", handler: emptyHandler},
@@ -316,5 +321,33 @@ func TestRegisterFallback(t *testing.T) {
 		if string(body) != tc.body {
 			t.Fatalf("%s(%s): returned %s expected %s", tc.method, tc.path, body, tc.body)
 		}
+	}
+}
+
+// Test Use function to try to register middlewares that work before all routes
+func Test_Use(t *testing.T) {
+	// get instance of gearbox
+	gb := new(gearbox)
+	gb.registeredRoutes = make([]*routeInfo, 0)
+
+	// register valid route
+	gb.Get("/ping", pingHandler)
+
+	// Use authorized middleware for all the application
+	gb.Use(unAuthorizedHandler)
+
+	// start serving
+	startGearbox(gb)
+
+	req, _ := http.NewRequest(MethodGet, "/ping", nil)
+	response, err := makeRequest(req, gb)
+
+	if err != nil {
+		t.Fatalf("%s(%s): %s", MethodGet, "/ping", err.Error())
+	}
+
+	// check status code
+	if response.StatusCode != StatusUnauthorized {
+		t.Fatalf("%s(%s): returned %d expected %d", MethodGet, "/ping", response.StatusCode, StatusUnauthorized)
 	}
 }

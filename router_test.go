@@ -2,8 +2,6 @@ package gearbox
 
 import (
 	"testing"
-
-	"github.com/valyala/fasthttp"
 )
 
 // TestValidateRoutePath tests if provided paths are valid or not
@@ -48,7 +46,10 @@ func TestCreateEmptyNode(t *testing.T) {
 }
 
 // emptyHandler just an empty handler
-var emptyHandler = func(ctx *fasthttp.RequestCtx) {}
+var emptyHandler = func(ctx *Context) {}
+
+// empty Handlers chain is just an empty array
+var emptyHandlersChain = handlersChain{}
 
 // TestRegisterRoute tests registering routes after validating it
 func TestRegisterRoute(t *testing.T) {
@@ -56,14 +57,15 @@ func TestRegisterRoute(t *testing.T) {
 	tests := []struct {
 		method  []byte
 		path    []byte
-		handler func(*fasthttp.RequestCtx)
+		handler handlersChain
 		isErr   bool
 	}{
-		{method: []byte(MethodPut), path: []byte("/admin/welcome"), handler: emptyHandler, isErr: false},
-		{method: []byte(MethodPost), path: []byte("/user/add"), handler: emptyHandler, isErr: false},
-		{method: []byte(MethodGet), path: []byte("/account/get"), handler: emptyHandler, isErr: false},
-		{method: []byte(MethodGet), path: []byte("/account/*"), handler: emptyHandler, isErr: false},
-		{method: []byte(MethodDelete), path: []byte("/account/delete"), handler: emptyHandler, isErr: false},
+		{method: []byte(MethodPut), path: []byte("/admin/welcome"), handler: emptyHandlersChain, isErr: false},
+		{method: []byte(MethodPost), path: []byte("/user/add"), handler: emptyHandlersChain, isErr: false},
+		{method: []byte(MethodGet), path: []byte("/account/get"), handler: emptyHandlersChain, isErr: false},
+		{method: []byte(MethodGet), path: []byte("/account/*"), handler: emptyHandlersChain, isErr: false},
+		{method: []byte(MethodGet), path: []byte("/account/*"), handler: emptyHandlersChain, isErr: false},
+		{method: []byte(MethodDelete), path: []byte("/account/delete"), handler: emptyHandlersChain, isErr: false},
 		{method: []byte(MethodDelete), path: []byte("/account/delete"), handler: nil, isErr: true},
 		{method: []byte(MethodGet), path: []byte("/account/*/getAccount"), handler: nil, isErr: true},
 	}
@@ -107,7 +109,7 @@ func TestRegisterInvalidRoute(t *testing.T) {
 	gb.registeredRoutes = make([]*routeInfo, 0)
 
 	// test handler is nil
-	if err := gb.registerRoute([]byte(MethodGet), []byte("invalid Path"), emptyHandler); err == nil {
+	if err := gb.registerRoute([]byte(MethodGet), []byte("invalid Path"), emptyHandlersChain); err == nil {
 		t.Errorf("input GET invalid Path find nil expecting error")
 	}
 }
@@ -122,18 +124,18 @@ func TestConstructRoutingTree(t *testing.T) {
 	routes := []struct {
 		method  []byte
 		path    []byte
-		handler func(*fasthttp.RequestCtx)
+		handler handlersChain
 	}{
-		{method: []byte(MethodGet), path: []byte("/articles/search"), handler: emptyHandler},
-		{method: []byte(MethodGet), path: []byte("/articles/test"), handler: emptyHandler},
-		{method: []byte(MethodGet), path: []byte("/articles/204"), handler: emptyHandler},
-		{method: []byte(MethodGet), path: []byte("/posts"), handler: emptyHandler},
-		{method: []byte(MethodGet), path: []byte("/post/502"), handler: emptyHandler},
-		{method: []byte(MethodGet), path: []byte("/post/a23011a"), handler: emptyHandler},
-		{method: []byte(MethodGet), path: []byte("/user/204"), handler: emptyHandler},
-		{method: []byte(MethodGet), path: []byte("/user/205/"), handler: emptyHandler},
-		{method: []byte(MethodPost), path: []byte("/user/204/setting"), handler: emptyHandler},
-		{method: []byte(MethodGet), path: []byte("/users/*"), handler: emptyHandler},
+		{method: []byte(MethodGet), path: []byte("/articles/search"), handler: emptyHandlersChain},
+		{method: []byte(MethodGet), path: []byte("/articles/test"), handler: emptyHandlersChain},
+		{method: []byte(MethodGet), path: []byte("/articles/204"), handler: emptyHandlersChain},
+		{method: []byte(MethodGet), path: []byte("/posts"), handler: emptyHandlersChain},
+		{method: []byte(MethodGet), path: []byte("/post/502"), handler: emptyHandlersChain},
+		{method: []byte(MethodGet), path: []byte("/post/a23011a"), handler: emptyHandlersChain},
+		{method: []byte(MethodGet), path: []byte("/user/204"), handler: emptyHandlersChain},
+		{method: []byte(MethodGet), path: []byte("/user/205/"), handler: emptyHandlersChain},
+		{method: []byte(MethodPost), path: []byte("/user/204/setting"), handler: emptyHandlersChain},
+		{method: []byte(MethodGet), path: []byte("/users/*"), handler: emptyHandlersChain},
 	}
 
 	// register routes
@@ -182,7 +184,7 @@ func TestNullRoutingTree(t *testing.T) {
 	gb.registeredRoutes = make([]*routeInfo, 0)
 
 	// register route
-	gb.registerRoute([]byte(MethodGet), []byte("/*"), emptyHandler)
+	gb.registerRoute([]byte(MethodGet), []byte("/*"), emptyHandlersChain)
 
 	// test handler is nil
 	if handler := gb.matchRoute([]byte(MethodGet), []byte("/hello/world")); handler != nil {
@@ -197,7 +199,7 @@ func TestMatchAll(t *testing.T) {
 	gb.registeredRoutes = make([]*routeInfo, 0)
 
 	// register route
-	gb.registerRoute([]byte(MethodGet), []byte("/*"), emptyHandler)
+	gb.registerRoute([]byte(MethodGet), []byte("/*"), emptyHandlersChain)
 	gb.constructRoutingTree()
 
 	// test handler is not nil
@@ -218,8 +220,8 @@ func TestConstructRoutingTreeConflict(t *testing.T) {
 	gb.registeredRoutes = make([]*routeInfo, 0)
 
 	// register routes
-	gb.registerRoute([]byte(MethodGet), []byte("/articles/test"), emptyHandler)
-	gb.registerRoute([]byte(MethodGet), []byte("/articles/test"), emptyHandler)
+	gb.registerRoute([]byte(MethodGet), []byte("/articles/test"), emptyHandlersChain)
+	gb.registerRoute([]byte(MethodGet), []byte("/articles/test"), emptyHandlersChain)
 
 	if err := gb.constructRoutingTree(); err == nil {
 		t.Fatalf("invalid listener passed")
@@ -234,7 +236,7 @@ func TestNoRegisteredFallback(t *testing.T) {
 	gb.registeredRoutes = make([]*routeInfo, 0)
 
 	// register routes
-	gb.registerRoute([]byte(MethodGet), []byte("/articles"), emptyHandler)
+	gb.registerRoute([]byte(MethodGet), []byte("/articles"), emptyHandlersChain)
 	gb.constructRoutingTree()
 
 	// attempt to match route that cannot match
@@ -251,8 +253,8 @@ func TestFallback(t *testing.T) {
 	gb.registeredRoutes = make([]*routeInfo, 0)
 
 	// register routes
-	gb.registerRoute([]byte(MethodGet), []byte("/articles"), emptyHandler)
-	if err := gb.registerFallback(emptyHandler); err != nil {
+	gb.registerRoute([]byte(MethodGet), []byte("/articles"), emptyHandlersChain)
+	if err := gb.registerFallback(emptyHandlersChain); err != nil {
 		t.Errorf("invalid fallback: %s", err.Error())
 	}
 	gb.constructRoutingTree()
