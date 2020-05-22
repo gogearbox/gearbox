@@ -1,18 +1,21 @@
 <p align="center">
-    <img src="https://github.com/abahmed/gearbox/blob/master/assets/gearbox-512.png"/>
+    <img src="https://github.com/gogearbox/gearbox/blob/master/assets/gearbox-512.png"/>
     <br />
-    <a href="https://godoc.org/github.com/abahmed/gearbox">
-      <img src="https://godoc.org/github.com/abahmed/gearbox?status.png" />
+    <a href="https://godoc.org/github.com/gogearbox/gearbox">
+      <img src="https://godoc.org/github.com/gogearbox/gearbox?status.png" />
     </a>
-    <img src="https://github.com/abahmed/gearbox/workflows/Test%20&%20Build/badge.svg?branch=master" />
-    <a href="https://codecov.io/gh/abahmed/gearbox">
-      <img src="https://codecov.io/gh/abahmed/gearbox/branch/master/graph/badge.svg" />
+    <img src="https://github.com/gogearbox/gearbox/workflows/Test%20&%20Build/badge.svg?branch=master" />
+    <a href="https://codecov.io/gh/gogearbox/gearbox">
+      <img src="https://codecov.io/gh/gogearbox/gearbox/branch/master/graph/badge.svg" />
     </a>
-    <a href="https://goreportcard.com/report/github.com/abahmed/gearbox">
-      <img src="https://goreportcard.com/badge/github.com/abahmed/gearbox" />
+    <a href="https://goreportcard.com/report/github.com/gogearbox/gearbox">
+      <img src="https://goreportcard.com/badge/github.com/gogearbox/gearbox" />
     </a>
     <a href="https://gitter.im/abahmed/gearbox?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
       <img src="https://badges.gitter.im/abahmed/gearbox.svg"/>
+    </a>
+    <a href="https://deepsource.io/gh/gogearbox/gearbox/?ref=repository-badge" target="_blank">
+    <img alt="DeepSource" title="DeepSource" src="https://static.deepsource.io/deepsource-badge-light-mini.svg">
     </a>
 </p>
 
@@ -38,7 +41,7 @@ In **gearbox**, we care about peformance and memory which will be used by each m
 Just use [go get](https://golang.org/cmd/go/#hdr-Add_dependencies_to_current_module_and_install_them) to download and install gearbox
 
 ```bash
-go get -u github.com/abahmed/gearbox
+go get -u github.com/gogearbox/gearbox
 ```
 
 ### Example
@@ -47,7 +50,7 @@ go get -u github.com/abahmed/gearbox
 package main
 
 import (
-	"github.com/abahmed/gearbox"
+	"github.com/gogearbox/gearbox"
 )
 
 func main() {
@@ -69,7 +72,7 @@ func main() {
 package main
 
 import (
-	"github.com/abahmed/gearbox"
+	"github.com/gogearbox/gearbox"
 	"log"
 )
 
@@ -109,21 +112,21 @@ func main() {
 ```
 
 ### Contribute & Support
-+ Add a [GitHub Star](https://github.com/abahmed/gearbox/stargazers)
-+ [Suggest new features, ideas and optimizations](https://github.com/abahmed/gearbox/issues)
-+ [Report issues](https://github.com/abahmed/gearbox/issues)
++ Add a [GitHub Star](https://github.com/gogearbox/gearbox/stargazers)
++ [Suggest new features, ideas and optimizations](https://github.com/gogearbox/gearbox/issues)
++ [Report issues](https://github.com/gogearbox/gearbox/issues)
 
-Check [Our Wiki](https://github.com/abahmed/gearbox/wiki) for more information about **gearbox** and how to **contribute**
+Check [Our Wiki](https://github.com/gogearbox/gearbox/wiki) for more information about **gearbox** and how to **contribute**
 
 ### Contributors
 
-<a href="https://github.com/abahmed/gearbox/graphs/contributors">
-  <img src="https://contributors-img.firebaseapp.com/image?repo=abahmed/gearbox" />
+<a href="https://github.com/gogearbox/gearbox/graphs/contributors">
+  <img src="https://contributors-img.firebaseapp.com/image?repo=gogearbox/gearbox" />
 </a>
 
 ### Get in touch!
 
-Feel free to Join us on [Gitter](https://gitter.im/abahmed/gearbox), or email us at [gearbox@googlegroups.com](gearbox@googlegroups.com)  if you have questions, or suggestions
+Feel free to Join us on [Gitter](https://gitter.im/gogearbox/gearbox), or email us at [gearbox@googlegroups.com](gearbox@googlegroups.com)  if you have questions, or suggestions
 
 ### License
 
