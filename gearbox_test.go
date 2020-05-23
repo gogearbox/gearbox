@@ -66,11 +66,8 @@ func makeRequest(request *http.Request, gb *gearbox) (*http.Response, error) {
 		ch <- gb.httpServer.ServeConn(c)
 	}()
 
-	select {
-	case err = <-ch:
-		if err != nil {
-			return nil, err
-		}
+	if err = <-ch; err != nil {
+		return nil, err
 	}
 
 	// Parse response
