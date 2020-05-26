@@ -66,11 +66,8 @@ func makeRequest(request *http.Request, gb *gearbox) (*http.Response, error) {
 		ch <- gb.httpServer.ServeConn(c)
 	}()
 
-	select {
-	case err = <-ch:
-		if err != nil {
-			return nil, err
-		}
+	if err = <-ch; err != nil {
+		return nil, err
 	}
 
 	// Parse response
@@ -108,7 +105,7 @@ var emptyMiddleware = func(ctx *Context) {
 }
 
 // registerRoute matches with register route request with available methods and calls it
-func registerRoute(gb Gearbox, method string, path string, handler func(ctx *Context)) {
+func registerRoute(gb Gearbox, method, path string, handler func(ctx *Context)) {
 	switch method {
 	case MethodGet:
 		gb.Get(path, handler)

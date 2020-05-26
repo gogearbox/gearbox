@@ -46,7 +46,7 @@ func validateRoutePath(path []byte) error {
 }
 
 // registerRoute registers handler with method and path
-func (gb *gearbox) registerRoute(method []byte, path []byte, handlers handlersChain) error {
+func (gb *gearbox) registerRoute(method, path []byte, handlers handlersChain) error {
 	// Handler is not provided
 	if handlers == nil {
 		return fmt.Errorf("route %s with method %s does not contain any handlers", path, method)
@@ -135,7 +135,7 @@ func (gb *gearbox) constructRoutingTree() error {
 }
 
 // matchRoute matches provided method and path with handler if it's existing
-func (gb *gearbox) matchRoute(method []byte, path []byte) handlersChain {
+func (gb *gearbox) matchRoute(method, path []byte) handlersChain {
 	if handlers := gb.matchRouteAgainstRegistered(method, path); handlers != nil {
 		return handlers
 	}
@@ -148,16 +148,16 @@ func (gb *gearbox) matchRoute(method []byte, path []byte) handlersChain {
 }
 
 // getKeywordEnd gets index of last byte before next '/' starting from index start
-func getKeywordEnd(start int, path *[]byte, len int) int {
-	for i := start; i < len; i++ {
+func getKeywordEnd(start int, path *[]byte, length int) int {
+	for i := start; i < length; i++ {
 		if (*path)[i] == '/' {
 			return i
 		}
 	}
-	return len
+	return length
 }
 
-func (gb *gearbox) matchRouteAgainstRegistered(method []byte, path []byte) handlersChain {
+func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) handlersChain {
 	// Start with root node
 	currentNode := gb.routingTreeRoot
 
