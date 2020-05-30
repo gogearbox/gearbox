@@ -59,7 +59,7 @@ func main() {
 
 	// Define your handlers
 	gb.Get("/hello", func(ctx *gearbox.Context) {
-		ctx.Response.SetBodyString("Hello World!")
+		ctx.RequestCtx.Response.SetBodyString("Hello World!")
 	})
 
 	// Start service
@@ -82,14 +82,14 @@ func main() {
 
 	// create a logger middleware
 	logMiddleware := func(ctx *gearbox.Context) {
-		log.Printf(ctx.String())
+		log.Printf(ctx.RequestCtx.String())
 		ctx.Next() // Next is what allows the request to continue to the next middleware/handler
 	}
 
 	// create an unauthorized middleware
 	unAuthorizedMiddleware := func(ctx *gearbox.Context) {
-		ctx.SetStatusCode(401) // unauthorized status code
-		ctx.Response.SetBodyString("You are unauthorized to access this page!")
+		ctx.RequestCtx.SetStatusCode(401) // unauthorized status code
+		ctx.RequestCtx.Response.SetBodyString("You are unauthorized to access this page!")
 	}
 
 	// Register the log middleware for all requests
@@ -97,13 +97,13 @@ func main() {
 
 	// Define your handlers
 	gb.Get("/hello", func(ctx *gearbox.Context) {
-		ctx.Response.SetBodyString("Hello World!")
+		ctx.RequestCtx.Response.SetBodyString("Hello World!")
 	})
     
     // define a route with unAuthorizedMiddleware as the middleware
     // you can define as many middlewares as you want and have the handler as the last argument
 	gb.Get("/protected", unAuthorizedMiddleware, func(ctx *gearbox.Context) {
-		ctx.Response.SetBodyString("You accessed a protected page")
+		ctx.RequestCtx.Response.SetBodyString("You accessed a protected page")
 	})
 
 	// Start service

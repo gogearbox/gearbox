@@ -85,18 +85,18 @@ var handler = func(ctx *Context) {}
 
 // unAuthorizedHandler sets status unauthorized in response
 var unAuthorizedHandler = func(ctx *Context) {
-	ctx.SetStatusCode(StatusUnauthorized)
+	ctx.RequestCtx.SetStatusCode(StatusUnauthorized)
 }
 
 // pingHandler returns string pong in response body
 var pingHandler = func(ctx *Context) {
-	ctx.Response.SetBodyString("pong")
+	ctx.RequestCtx.Response.SetBodyString("pong")
 }
 
 // fallbackHandler returns not found status with custom fallback handler in response body
 var fallbackHandler = func(ctx *Context) {
-	ctx.SetStatusCode(StatusNotFound)
-	ctx.Response.SetBodyString("custom fallback handler")
+	ctx.RequestCtx.SetStatusCode(StatusNotFound)
+	ctx.RequestCtx.Response.SetBodyString("custom fallback handler")
 }
 
 // emptyMiddleware does not stop the request and passes it to the next middleware/handler
