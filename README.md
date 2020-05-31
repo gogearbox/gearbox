@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://github.com/gogearbox/gearbox/blob/master/assets/gearbox-512.png"/>
+    <img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/gearbox-512.png"/>
     <br />
     <a href="https://godoc.org/github.com/gogearbox/gearbox">
       <img src="https://godoc.org/github.com/gogearbox/gearbox?status.png" />
@@ -11,11 +11,11 @@
     <a href="https://goreportcard.com/report/github.com/gogearbox/gearbox">
       <img src="https://goreportcard.com/badge/github.com/gogearbox/gearbox" />
     </a>
-    <a href="https://gitter.im/abahmed/gearbox?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge">
-      <img src="https://badges.gitter.im/abahmed/gearbox.svg"/>
-    </a>
+	<a href="https://discord.com/invite/CT8my4R">
+      <img src="https://img.shields.io/discord/716724372642988064?label=Discord&logo=discord">
+  	</a>
     <a href="https://deepsource.io/gh/gogearbox/gearbox/?ref=repository-badge" target="_blank">
-    <img alt="DeepSource" title="DeepSource" src="https://static.deepsource.io/deepsource-badge-light-mini.svg">
+      <img alt="DeepSource" title="DeepSource" src="https://static.deepsource.io/deepsource-badge-light-mini.svg">
     </a>
 </p>
 
@@ -100,8 +100,8 @@ func main() {
 		ctx.RequestCtx.Response.SetBodyString("Hello World!")
 	})
     
-    // define a route with unAuthorizedMiddleware as the middleware
-    // you can define as many middlewares as you want and have the handler as the last argument
+	// Define a route with unAuthorizedMiddleware as the middleware
+	// you can define as many middlewares as you want and have the handler as the last argument
 	gb.Get("/protected", unAuthorizedMiddleware, func(ctx *gearbox.Context) {
 		ctx.RequestCtx.Response.SetBodyString("You accessed a protected page")
 	})
@@ -116,7 +116,7 @@ func main() {
 + [Suggest new features, ideas and optimizations](https://github.com/gogearbox/gearbox/issues)
 + [Report issues](https://github.com/gogearbox/gearbox/issues)
 
-Check [Our Wiki](https://github.com/gogearbox/gearbox/wiki) for more information about **gearbox** and how to **contribute**
+Check [Our Docs](https://gogearbox.com/docs) for more information about **gearbox** and how to **contribute**
 
 ### Contributors
 
@@ -126,7 +126,7 @@ Check [Our Wiki](https://github.com/gogearbox/gearbox/wiki) for more information
 
 ### Get in touch!
 
-Feel free to Join us on [Gitter](https://gitter.im/gogearbox/gearbox), or email us at [gearbox@googlegroups.com](gearbox@googlegroups.com)  if you have questions, or suggestions
+Feel free to chat with us on [Discord](https://discord.com/invite/CT8my4R), or email us at [gearbox@googlegroups.com](gearbox@googlegroups.com)  if you have questions, or suggestions
 
 ### License
 
