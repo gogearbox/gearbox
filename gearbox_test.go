@@ -125,6 +125,8 @@ func registerRoute(gb Gearbox, method, path string, handler func(ctx *Context)) 
 		gb.Options(path, handler)
 	case MethodTrace:
 		gb.Trace(path, handler)
+	default:
+		gb.Method(method, path, handler)
 	}
 }
 
@@ -149,6 +151,7 @@ func TestMethods(t *testing.T) {
 		{method: MethodOptions, path: "/user/204/setting", handler: emptyHandler},
 		{method: MethodTrace, path: "/users/*", handler: emptyHandler},
 		{method: MethodTrace, path: "/users/test", handler: emptyHandler},
+		{method: "CUSTOM", path: "/users/test/private", handler: emptyHandler},
 	}
 
 	// get instance of gearbox
@@ -184,6 +187,7 @@ func TestMethods(t *testing.T) {
 		{method: MethodConnect, path: "/user/204", statusCode: StatusOK},
 		{method: MethodOptions, path: "/user/204/setting", statusCode: StatusOK},
 		{method: MethodTrace, path: "/users/testing", statusCode: StatusOK},
+		{method: "CUSTOM", path: "/users/test/private", statusCode: StatusOK},
 	}
 
 	for _, tc := range testCases {
