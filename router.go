@@ -3,17 +3,38 @@ package gearbox
 import (
 	"bytes"
 	"fmt"
+	"regexp"
+	"sort"
+	"sync"
 )
 
 type routeNode struct {
-	Name     []byte
-	Method   []byte
-	MatchAll bool
-	Methods  tst
-	Children tst
+	Name      []byte
+	Endpoints tst
+	Children  tst
 }
 
-type routeInfo struct {
+type paramType uint8
+
+const (
+	ptNoParam paramType = iota
+	ptRegexp
+	ptParam
+	ptMatchAll
+)
+
+type param struct {
+	Name  []byte
+	Value string
+	Type  paramType
+}
+
+type endpoint struct {
+	Params   []*param
+	Handlers handlersChain
+}
+
+type route struct {
 	Method   []byte
 	Path     []byte
 	Handlers handlersChain
@@ -21,6 +42,12 @@ type routeInfo struct {
 
 type routerFallback struct {
 	Handlers handlersChain
+}
+
+type matchParamsResult struct {
+	matched  bool
+	handlers handlersChain
+	params   tst
 }
 
 // validateRoutePath makes sure that path complies with path's rules
@@ -36,10 +63,24 @@ func validateRoutePath(path []byte) error {
 		return fmt.Errorf("path must start with /")
 	}
 
-	// Make sure that star is in the end of path if it's existing
-	starIndex := bytes.Index(path, []byte("*"))
-	if starIndex > 0 && starIndex < length-1 && path[starIndex-1] == '/' {
-		return fmt.Errorf("* must be in the end of path")
+	params := newTST()
+	parts := bytes.Split(path, []byte("/"))
+	partsLen := len(parts)
+	for i := 1; i < partsLen; i++ {
+		if len(parts[i]) == 0 {
+			continue
+		}
+
+		if p := parseParamter(parts[i]); p != nil {
+			if p.Type == ptParam || p.Type == ptRegexp {
+				if pName := params.Get(p.Name); pName != nil {
+					return fmt.Errorf("paramter is duplicated")
+				}
+				params.Set(p.Name, true)
+			} else if p.Type == ptMatchAll && i != partsLen-1 {
+				return fmt.Errorf("* must be in the end of path")
+			}
+		}
 	}
 
 	return nil
@@ -58,7 +99,7 @@ func (gb *gearbox) registerRoute(method, path []byte, handlers handlersChain) er
 	}
 
 	// Add route to registered routes
-	gb.registeredRoutes = append(gb.registeredRoutes, &routeInfo{
+	gb.registeredRoutes = append(gb.registeredRoutes, &route{
 		Path:     path,
 		Method:   method,
 		Handlers: handlers,
@@ -80,11 +121,79 @@ func (gb *gearbox) registerFallback(handlers handlersChain) error {
 // createEmptyRouteNode creates a new route node with name
 func createEmptyRouteNode(name []byte) *routeNode {
 	return &routeNode{
-		Name:     name,
-		Children: newTST(),
-		Methods:  newTST(),
-		MatchAll: false,
+		Name:      name,
+		Children:  newTST(),
+		Endpoints: newTST(),
 	}
+}
+
+// parseParamter parses path part into param struct, or returns nil if it's
+// not a parameter
+func parseParamter(pathPart []byte) *param {
+	// match all
+	if pathPart[0] == '*' {
+		return &param{
+			Name: []byte("*"),
+			Type: ptMatchAll,
+		}
+	}
+
+	params := bytes.Split(pathPart, []byte(":"))
+	paramsLen := len(params)
+
+	if paramsLen == 2 { // Just a parameter
+		return &param{
+			Name: params[1],
+			Type: ptParam,
+		}
+	} else if paramsLen == 3 { // Regex paramter
+		return &param{
+			Name:  params[1],
+			Value: string(params[2]),
+			Type:  ptRegexp,
+		}
+	}
+
+	return nil
+}
+
+func getLeastStrictParamType(params []*param) paramType {
+	pLen := len(params)
+	if pLen == 0 {
+		return ptNoParam
+	}
+
+	pType := params[0].Type
+	for i := 1; i < pLen; i++ {
+		if params[i].Type > pType {
+			pType = params[i].Type
+		}
+	}
+	return pType
+}
+
+func isValidEndpoint(endpoints []*endpoint, newEndpoint *endpoint) bool {
+	for i := range endpoints {
+		if len(endpoints[i].Params) == len(newEndpoint.Params) {
+			isValid := false
+			for j := range endpoints[i].Params {
+				if endpoints[i].Params[j].Type != newEndpoint.Params[j].Type {
+					isValid = true
+				}
+			}
+			return isValid
+		}
+	}
+	return true
+}
+
+// trimPath trims left and right slashes in path
+func trimPath(path []byte) []byte {
+	pathLastIndex := len(path) - 1
+	if path[pathLastIndex] == '/' && pathLastIndex > 0 {
+		pathLastIndex--
+	}
+	return path[1 : pathLastIndex+1]
 }
 
 // constructRoutingTree constructs routing tree according to provided routes
@@ -94,131 +203,190 @@ func (gb *gearbox) constructRoutingTree() error {
 
 	for _, route := range gb.registeredRoutes {
 		currentNode := gb.routingTreeRoot
+		params := make([]*param, 0)
 
-		// Split path into slices of keywords
-		keywords := bytes.Split(route.Path, []byte("/"))
+		// Split path into slices of parts
+		parts := bytes.Split(route.Path, []byte("/"))
 
-		keywordsLen := len(keywords)
-		for i := 1; i < keywordsLen; i++ {
-			keyword := keywords[i]
+		partsLen := len(parts)
+		for i := 1; i < partsLen; i++ {
+			part := parts[i]
 
-			// Do not create node if keyword is empty
-			if len(keyword) == 0 {
+			// Do not create node if part is empty
+			if len(part) == 0 {
 				continue
 			}
 
-			// Set MatchAll flag for current node
-			if keyword[0] == '*' {
-				currentNode.MatchAll = true
+			// Parse part as a parameter if it is
+			if param := parseParamter(part); param != nil {
+				params = append(params, param)
 				continue
 			}
 
-			// Try to get a child of current node with keyword, otherwise
+			// Try to get a child of current node with part, otherwise
 			//creates a new node and make it current node
-			keywordNode, ok := currentNode.Children.Get(keyword).(*routeNode)
+			partNode, ok := currentNode.Children.Get(part).(*routeNode)
 			if !ok {
-				keywordNode = createEmptyRouteNode(keyword)
-				currentNode.Children.Set(keyword, keywordNode)
+				partNode = createEmptyRouteNode(part)
+				currentNode.Children.Set(part, partNode)
 			}
-			currentNode = keywordNode
+			currentNode = partNode
+		}
+
+		currentEndpoint := &endpoint{
+			Handlers: route.Handlers,
+			Params:   params,
 		}
 
 		// Make sure that current node does not have a handler for route's method
-		if routeHandler := currentNode.Methods.Get(route.Method); routeHandler != nil {
-			return fmt.Errorf("there already registered method %s for %s", route.Method, route.Path)
+		var endpoints []*endpoint
+		if result, ok := currentNode.Endpoints.Get(route.Method).([]*endpoint); ok {
+			if ok := isValidEndpoint(result, currentEndpoint); !ok {
+				return fmt.Errorf("there already registered method %s for %s", route.Method, route.Path)
+			}
+
+			endpoints = append(result, currentEndpoint)
+			sort.Slice(endpoints, func(i, j int) bool {
+				iLen := len(endpoints[i].Params)
+				jLen := len(endpoints[j].Params)
+				if iLen == jLen {
+					iParamType := getLeastStrictParamType(endpoints[i].Params)
+					jParamType := getLeastStrictParamType(endpoints[j].Params)
+					return iParamType < jParamType
+				}
+
+				return iLen > jLen
+			})
+		} else {
+			endpoints = []*endpoint{currentEndpoint}
 		}
 
 		// Save handler to route's method for current node
-		currentNode.Methods.Set(route.Method, route.Handlers)
+		currentNode.Endpoints.Set(route.Method, endpoints)
 	}
 	return nil
 }
 
 // matchRoute matches provided method and path with handler if it's existing
-func (gb *gearbox) matchRoute(method, path []byte) handlersChain {
-	if handlers := gb.matchRouteAgainstRegistered(method, path); handlers != nil {
-		return handlers
+func (gb *gearbox) matchRoute(method, path []byte) (handlersChain, tst) {
+	if handlers, params := gb.matchRouteAgainstRegistered(method, path); handlers != nil {
+		return handlers, params
 	}
 
 	if gb.registeredFallback != nil && gb.registeredFallback.Handlers != nil {
-		return gb.registeredFallback.Handlers
+		tst := newTST()
+		return gb.registeredFallback.Handlers, tst
 	}
 
-	return nil
+	return nil, nil
 }
 
-// getKeywordEnd gets index of last byte before next '/' starting from index start
-func getKeywordEnd(start int, path *[]byte, length int) int {
-	for i := start; i < length; i++ {
-		if (*path)[i] == '/' {
-			return i
+func matchEndpointParams(ep *endpoint, paths [][]byte, pathIndex int) (tst, bool) {
+	paramDic := newTST()
+	endpointParams := ep.Params
+	pathsLen := len(paths)
+
+	for pIdx := range endpointParams {
+		if endpointParams[pIdx].Type == ptMatchAll {
+			// Last paramter, so we can return
+			return paramDic, true
+		}
+
+		if pathIndex >= pathsLen {
+			return nil, false
+		}
+
+		if len(paths[pathIndex]) == 0 {
+			continue
+		}
+
+		if endpointParams[pIdx].Type == ptParam {
+			paramDic.Set(endpointParams[pIdx].Name, paths[pathIndex])
+		} else if endpointParams[pIdx].Type == ptRegexp {
+			if match, _ := regexp.Match(endpointParams[pIdx].Value, paths[pathIndex]); match {
+				paramDic.Set(endpointParams[pIdx].Name, paths[pathIndex])
+			} else {
+				return nil, false
+			}
+		}
+
+		pIdx++
+		pathIndex++
+	}
+
+	// There is more parts, so no match
+	if pathsLen-pathIndex > 0 {
+		return nil, false
+	}
+
+	return paramDic, true
+}
+
+func matchNodeEndpoints(node *routeNode, method []byte, paths [][]byte,
+	pathIndex int, result *matchParamsResult, wg *sync.WaitGroup) {
+	if endpoints, ok := node.Endpoints.Get(method).([]*endpoint); ok {
+		for j := range endpoints {
+			if params, matched := matchEndpointParams(endpoints[j], paths, pathIndex); matched {
+				result.matched = true
+				result.params = params
+				result.handlers = endpoints[j].Handlers
+				wg.Done()
+				return
+			}
 		}
 	}
-	return length
+
+	result.matched = false
+	wg.Done()
 }
 
-func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) handlersChain {
+func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersChain, tst) {
 	// Start with root node
 	currentNode := gb.routingTreeRoot
 
-	// Return if root is empty
+	// Return if root is empty, or path is not valid
 	if currentNode == nil || len(path) == 0 || path[0] != '/' {
-		return nil
+		return nil, nil
 	}
 
-	// Used to track if this path matched with match all node during matching
-	// loop to fallback
-	var lastMatchAll *routeNode
-	if currentNode.MatchAll {
-		lastMatchAll = currentNode
-	}
+	paths := bytes.Split(trimPath(path), []byte("/"))
 
-	pathLen := len(path)
-	lastPathByte := pathLen - 1
+	var wg sync.WaitGroup
+	lastMatchedNodes := make([]*matchParamsResult, 1)
+	lastMatchedNodes[0] = &matchParamsResult{}
+	lastMatchedNodesIndex := 1
+	wg.Add(1)
+	go matchNodeEndpoints(currentNode, method, paths, 0, lastMatchedNodes[0], &wg)
 
-	// Start from the second byte as first is '/'
-	start := 1
-	for end := getKeywordEnd(start, &path, pathLen); start < lastPathByte; end = getKeywordEnd(start, &path, pathLen) {
-		keyword := path[start:end]
-		start = end + 1
-
-		// Ignore empty keywords
-		if len(keyword) == 0 {
+	for i := range paths {
+		if len(paths[i]) == 0 {
 			continue
 		}
 
-		// Try to match keyword with a child of current node
-		if keywordNode, ok := currentNode.Children.Get(keyword).(*routeNode); ok {
-
-			// set matched node as current node
-			currentNode = keywordNode
-
-			// Set lastMatchAll node if MatchAll flag is set in current node
-			if currentNode.MatchAll {
-				lastMatchAll = currentNode
-			}
-			continue
+		// Try to match part with a child of current node
+		pathNode, ok := currentNode.Children.Get(paths[i]).(*routeNode)
+		if !ok {
+			break
 		}
 
-		// There is no match for keyword with a child of current node
-		// Check if lastMatchAll node is set to fallback
-		if lastMatchAll == nil {
-			return nil
-		}
+		// set matched node as current node
+		currentNode = pathNode
 
-		// Try to get handler for provided method in lastMatchAll node and return it
-		if routeHandler, ok := lastMatchAll.Methods.Get(method).(handlersChain); ok {
-			return routeHandler
-		}
-
-		// Otherwise, return nil since there is no match
-		return nil
+		v := matchParamsResult{}
+		lastMatchedNodes = append(lastMatchedNodes, &v)
+		wg.Add(1)
+		go matchNodeEndpoints(currentNode, method, paths, i+1, &v, &wg)
+		lastMatchedNodesIndex++
 	}
 
-	// Matching with path is done and trying get handler for provided method in
-	// currentNode, otherwise return nil
-	if routeHandler, ok := currentNode.Methods.Get(method).(handlersChain); ok {
-		return routeHandler
+	wg.Wait()
+
+	// Return longest prefix match
+	for i := lastMatchedNodesIndex - 1; i >= 0; i-- {
+		if lastMatchedNodes[i].matched {
+			return lastMatchedNodes[i].handlers, lastMatchedNodes[i].params
+		}
 	}
-	return nil
+
+	return nil, nil
 }

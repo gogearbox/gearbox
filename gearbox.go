@@ -129,7 +129,7 @@ type Gearbox interface {
 type gearbox struct {
 	httpServer         *fasthttp.Server
 	routingTreeRoot    *routeNode
-	registeredRoutes   []*routeInfo
+	registeredRoutes   []*route
 	address            string // server address
 	handlers           handlersChain
 	registeredFallback *routerFallback
@@ -138,7 +138,7 @@ type gearbox struct {
 // New creates a new instance of gearbox
 func New() Gearbox {
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*routeInfo, 0)
+	gb.registeredRoutes = make([]*route, 0)
 	gb.httpServer = gb.newHTTPServer()
 	return gb
 }
@@ -248,9 +248,10 @@ func (gb *gearbox) Use(middlewares ...handlerFunc) {
 // Handles all incoming requests and route them to proper handler according to
 // method and path
 func (gb *gearbox) handler(ctx *fasthttp.RequestCtx) {
-	if handlers := gb.matchRoute(ctx.Request.Header.Method(), ctx.URI().Path()); handlers != nil {
+	if handlers, params := gb.matchRoute(ctx.Request.Header.Method(), ctx.URI().Path()); handlers != nil {
 		context := Context{
 			RequestCtx: ctx,
+			Params:     params,
 			handlers:   append(gb.handlers, handlers...),
 			index:      0,
 		}
