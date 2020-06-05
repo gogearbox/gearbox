@@ -16,11 +16,12 @@ type routeNode struct {
 
 type paramType uint8
 
+// Supported parameter types
 const (
-	ptNoParam paramType = iota
-	ptRegexp
-	ptParam
-	ptMatchAll
+	ptNoParam  paramType = iota // No paramter (most strict)
+	ptRegexp                    // Regex parameter
+	ptParam                     // Normal parameter
+	ptMatchAll                  // Match all parameter (least strict)
 )
 
 type param struct {
@@ -157,6 +158,8 @@ func parseParamter(pathPart []byte) *param {
 	return nil
 }
 
+// getLeastStrictParamType returns least strict parameter type from list of
+// parameters
 func getLeastStrictParamType(params []*param) paramType {
 	pLen := len(params)
 	if pLen == 0 {
