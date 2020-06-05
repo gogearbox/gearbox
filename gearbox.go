@@ -121,6 +121,7 @@ type Gearbox interface {
 	Connect(path string, handlers ...handlerFunc) error
 	Options(path string, handlers ...handlerFunc) error
 	Trace(path string, handlers ...handlerFunc) error
+	Method(method, path string, handlers ...handlerFunc) error
 	Fallback(handlers ...handlerFunc) error
 	Use(middlewares ...handlerFunc)
 }
@@ -230,6 +231,11 @@ func (gb *gearbox) Options(path string, handlers ...handlerFunc) error {
 // Trace registers an http relevant method
 func (gb *gearbox) Trace(path string, handlers ...handlerFunc) error {
 	return gb.registerRoute([]byte(MethodTrace), []byte(path), handlers)
+}
+
+// Trace registers an http relevant method
+func (gb *gearbox) Method(method, path string, handlers ...handlerFunc) error {
+	return gb.registerRoute([]byte(method), []byte(path), handlers)
 }
 
 // Fallback registers an http handler only fired when no other routes match with request
