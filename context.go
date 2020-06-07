@@ -13,6 +13,7 @@ type handlersChain []handlerFunc
 // Context defines the current context of request and handlers/middlewares to execute
 type Context struct {
 	RequestCtx *fasthttp.RequestCtx
+	Params     tst
 	handlers   handlersChain
 	index      int
 }

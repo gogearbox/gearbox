@@ -6,6 +6,7 @@ package gearbox
 type tst interface {
 	Set(word []byte, value interface{})
 	Get(word []byte) interface{}
+	GetString(word string) interface{}
 }
 
 // Ternary Search Tree node that holds a single character and value if there is
@@ -57,6 +58,11 @@ func (t *tstNode) Get(key []byte) interface{} {
 		}
 	}
 	return nil
+}
+
+// Get gets the value of provided key (string) if it's existing, otherwise returns nil
+func (t *tstNode) GetString(key string) interface{} {
+	return t.Get([]byte(key))
 }
 
 // insert is an internal method for inserting a []byte with value in TST

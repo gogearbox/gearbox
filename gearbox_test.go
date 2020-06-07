@@ -156,7 +156,7 @@ func TestMethods(t *testing.T) {
 
 	// get instance of gearbox
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*routeInfo, 0)
+	gb.registeredRoutes = make([]*route, 0)
 
 	// register routes according to method
 	for _, r := range routes {
@@ -276,7 +276,7 @@ func TestStop(t *testing.T) {
 func TestRegisterFallback(t *testing.T) {
 	// get instance of gearbox
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*routeInfo, 0)
+	gb.registeredRoutes = make([]*route, 0)
 
 	// register valid route
 	gb.Get("/ping", pingHandler)
@@ -329,7 +329,7 @@ func TestRegisterFallback(t *testing.T) {
 func Test_Use(t *testing.T) {
 	// get instance of gearbox
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*routeInfo, 0)
+	gb.registeredRoutes = make([]*route, 0)
 
 	// register valid route
 	gb.Get("/ping", pingHandler)

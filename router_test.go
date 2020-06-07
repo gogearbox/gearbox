@@ -72,7 +72,7 @@ func TestRegisterRoute(t *testing.T) {
 
 	// create gearbox instance
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*routeInfo, 0)
+	gb.registeredRoutes = make([]*route, 0)
 
 	// counter for valid routes
 	validCounter := 0
@@ -106,7 +106,7 @@ func TestRegisterRoute(t *testing.T) {
 func TestRegisterInvalidRoute(t *testing.T) {
 	// create gearbox instance
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*routeInfo, 0)
+	gb.registeredRoutes = make([]*route, 0)
 
 	// test handler is nil
 	if err := gb.registerRoute([]byte(MethodGet), []byte("invalid Path"), emptyHandlersChain); err == nil {
@@ -118,7 +118,7 @@ func TestRegisterInvalidRoute(t *testing.T) {
 func TestConstructRoutingTree(t *testing.T) {
 	// create gearbox instance
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*routeInfo, 0)
+	gb.registeredRoutes = make([]*route, 0)
 
 	// testing routes
 	routes := []struct {
@@ -170,7 +170,7 @@ func TestConstructRoutingTree(t *testing.T) {
 
 	// test matching routes
 	for _, rq := range requests {
-		handler := gb.matchRoute(rq.method, rq.path)
+		handler, _ := gb.matchRoute(rq.method, rq.path)
 		if (handler != nil && !rq.match) || (handler == nil && rq.match) {
 			t.Errorf("input %s %s find nil expecting handler", rq.method, rq.path)
 		}
@@ -181,13 +181,13 @@ func TestConstructRoutingTree(t *testing.T) {
 func TestNullRoutingTree(t *testing.T) {
 	// create gearbox instance
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*routeInfo, 0)
+	gb.registeredRoutes = make([]*route, 0)
 
 	// register route
 	gb.registerRoute([]byte(MethodGet), []byte("/*"), emptyHandlersChain)
 
 	// test handler is nil
-	if handler := gb.matchRoute([]byte(MethodGet), []byte("/hello/world")); handler != nil {
+	if handler, _ := gb.matchRoute([]byte(MethodGet), []byte("/hello/world")); handler != nil {
 		t.Errorf("input GET /hello/world find handler expecting nil")
 	}
 }
@@ -196,18 +196,18 @@ func TestNullRoutingTree(t *testing.T) {
 func TestMatchAll(t *testing.T) {
 	// create gearbox instance
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*routeInfo, 0)
+	gb.registeredRoutes = make([]*route, 0)
 
 	// register route
 	gb.registerRoute([]byte(MethodGet), []byte("/*"), emptyHandlersChain)
 	gb.constructRoutingTree()
 
 	// test handler is not nil
-	if handler := gb.matchRoute([]byte(MethodGet), []byte("/hello/world")); handler == nil {
+	if handler, _ := gb.matchRoute([]byte(MethodGet), []byte("/hello/world")); handler == nil {
 		t.Errorf("input GET /hello/world find nil expecting handler")
 	}
 
-	if handler := gb.matchRoute([]byte(MethodGet), []byte("//world")); handler == nil {
+	if handler, _ := gb.matchRoute([]byte(MethodGet), []byte("//world")); handler == nil {
 		t.Errorf("input GET //world find nil expecting handler")
 	}
 }
@@ -217,7 +217,7 @@ func TestMatchAll(t *testing.T) {
 func TestConstructRoutingTreeConflict(t *testing.T) {
 	// create gearbox instance
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*routeInfo, 0)
+	gb.registeredRoutes = make([]*route, 0)
 
 	// register routes
 	gb.registerRoute([]byte(MethodGet), []byte("/articles/test"), emptyHandlersChain)
@@ -233,14 +233,14 @@ func TestConstructRoutingTreeConflict(t *testing.T) {
 func TestNoRegisteredFallback(t *testing.T) {
 	// create gearbox instance
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*routeInfo, 0)
+	gb.registeredRoutes = make([]*route, 0)
 
 	// register routes
 	gb.registerRoute([]byte(MethodGet), []byte("/articles"), emptyHandlersChain)
 	gb.constructRoutingTree()
 
 	// attempt to match route that cannot match
-	if handler := gb.matchRoute([]byte(MethodGet), []byte("/fail")); handler != nil {
+	if handler, _ := gb.matchRoute([]byte(MethodGet), []byte("/fail")); handler != nil {
 		t.Errorf("input GET /fail found a valid handler, expecting nil")
 	}
 }
@@ -250,7 +250,7 @@ func TestNoRegisteredFallback(t *testing.T) {
 func TestFallback(t *testing.T) {
 	// create gearbox instance
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*routeInfo, 0)
+	gb.registeredRoutes = make([]*route, 0)
 
 	// register routes
 	gb.registerRoute([]byte(MethodGet), []byte("/articles"), emptyHandlersChain)
@@ -260,7 +260,7 @@ func TestFallback(t *testing.T) {
 	gb.constructRoutingTree()
 
 	// attempt to match route that cannot match
-	if handler := gb.matchRoute([]byte(MethodGet), []byte("/fail")); handler == nil {
+	if handler, _ := gb.matchRoute([]byte(MethodGet), []byte("/fail")); handler == nil {
 		t.Errorf("input GET /fail did not find a valid handler, expecting valid fallback handler")
 	}
 }
