@@ -44,7 +44,7 @@ Just use [go get](https://golang.org/cmd/go/#hdr-Add_dependencies_to_current_mod
 go get -u github.com/gogearbox/gearbox
 ```
 
-### Example
+### Examples
 
 ```go
 package main
@@ -67,7 +67,34 @@ func main() {
 }
 ```
 
-#### Using middlewares for the whole application
+#### Parameters
+```go
+package main
+
+import (
+	"github.com/gogearbox/gearbox"
+)
+
+func main() {
+	// Setup gearbox
+	gb := gearbox.New()
+
+	// Handler with parameter
+	gb.Get("/users/:user", func(ctx *gearbox.Context) {
+		fmt.Printf("%s\n", ctx.Params.GetString("user"))
+	})
+
+	// Handler with regex parameter
+	gb.Get("/book/:name:([a-z]+[0-3])", func(ctx *gearbox.Context) {
+		fmt.Printf("%s\n", ctx.Params.GetString("name"))
+	})
+
+	// Start service
+	gb.Start(":3000")
+}
+```
+
+#### Middlewares
 ```go
 package main
 
