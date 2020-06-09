@@ -15,6 +15,7 @@ func ExampleTST() {
 	fmt.Println(tst.Get([]byte("us")))
 	fmt.Println(tst.Get([]byte("user1")))
 	fmt.Println(tst.Get([]byte("not-existing")))
+	fmt.Println(tst.GetString(("not-existing")))
 
 	tst.Set([]byte("account"), 5)
 	tst.Set([]byte("account"), 6)
@@ -29,6 +30,7 @@ func ExampleTST() {
 	fmt.Println(tst.Get([]byte("")))
 	// Output:
 	// 1
+	// <nil>
 	// <nil>
 	// <nil>
 	// <nil>
