@@ -18,7 +18,7 @@ type paramType uint8
 
 // Supported parameter types
 const (
-	ptNoParam  paramType = iota // No paramter (most strict)
+	ptNoParam  paramType = iota // No parameter (most strict)
 	ptRegexp                    // Regex parameter
 	ptParam                     // Normal parameter
 	ptMatchAll                  // Match all parameter (least strict)
@@ -72,10 +72,10 @@ func validateRoutePath(path []byte) error {
 			continue
 		}
 
-		if p := parseParamter(parts[i]); p != nil {
+		if p := parseParameter(parts[i]); p != nil {
 			if p.Type == ptParam || p.Type == ptRegexp {
 				if pName := params.Get(p.Name); pName != nil {
-					return fmt.Errorf("paramter is duplicated")
+					return fmt.Errorf("parameter is duplicated")
 				}
 				params.Set(p.Name, true)
 			} else if p.Type == ptMatchAll && i != partsLen-1 {
@@ -128,9 +128,13 @@ func createEmptyRouteNode(name []byte) *routeNode {
 	}
 }
 
-// parseParamter parses path part into param struct, or returns nil if it's
+// parseParameter parses path part into param struct, or returns nil if it's
 // not a parameter
-func parseParamter(pathPart []byte) *param {
+func parseParameter(pathPart []byte) *param {
+	if len(pathPart) == 0 {
+		return nil
+	}
+
 	// match all
 	if pathPart[0] == '*' {
 		return &param{
@@ -142,12 +146,12 @@ func parseParamter(pathPart []byte) *param {
 	params := bytes.Split(pathPart, []byte(":"))
 	paramsLen := len(params)
 
-	if paramsLen == 2 { // Just a parameter
+	if paramsLen == 2 && len(params[0]) == 0 { // Just a parameter
 		return &param{
 			Name: params[1],
 			Type: ptParam,
 		}
-	} else if paramsLen == 3 { // Regex paramter
+	} else if paramsLen == 3 && len(params[0]) == 0 { // Regex parameter
 		return &param{
 			Name:  params[1],
 			Value: string(params[2]),
@@ -196,7 +200,13 @@ func trimPath(path []byte) []byte {
 	if path[pathLastIndex] == '/' && pathLastIndex > 0 {
 		pathLastIndex--
 	}
-	return path[1 : pathLastIndex+1]
+
+	pathFirstIndex := 1
+	if path[0] != '/' {
+		pathFirstIndex = 0
+	}
+
+	return path[pathFirstIndex : pathLastIndex+1]
 }
 
 // constructRoutingTree constructs routing tree according to provided routes
@@ -221,7 +231,7 @@ func (gb *gearbox) constructRoutingTree() error {
 			}
 
 			// Parse part as a parameter if it is
-			if param := parseParamter(part); param != nil {
+			if param := parseParameter(part); param != nil {
 				params = append(params, param)
 				continue
 			}
@@ -291,7 +301,7 @@ func matchEndpointParams(ep *endpoint, paths [][]byte, pathIndex int) (tst, bool
 
 	for pIdx := range endpointParams {
 		if endpointParams[pIdx].Type == ptMatchAll {
-			// Last paramter, so we can return
+			// Last parameter, so we can return
 			return paramDic, true
 		}
 
@@ -355,8 +365,7 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersCha
 	paths := bytes.Split(trimPath(path), []byte("/"))
 
 	var wg sync.WaitGroup
-	lastMatchedNodes := make([]*matchParamsResult, 1)
-	lastMatchedNodes[0] = &matchParamsResult{}
+	lastMatchedNodes := []*matchParamsResult{{}}
 	lastMatchedNodesIndex := 1
 	wg.Add(1)
 	go matchNodeEndpoints(currentNode, method, paths, 0, lastMatchedNodes[0], &wg)
