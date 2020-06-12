@@ -49,8 +49,8 @@ func (t *tstImpl) Get(key []byte) interface{} {
 		return nil
 	}
 
-	t.mutex.RLock()
-	defer t.mutex.RUnlock()
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 
 	lastElm := length - 1
 

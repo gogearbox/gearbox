@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 
 	"github.com/valyala/fasthttp"
 )
@@ -139,6 +140,7 @@ type gearbox struct {
 	handlers           handlersChain
 	registeredFallback *routerFallback
 	cache              cache
+	cacheLock          sync.Mutex
 	settings           *Settings
 }
 
