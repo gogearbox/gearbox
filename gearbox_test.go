@@ -218,6 +218,8 @@ func TestMethods(t *testing.T) {
 			t.Fatalf("%s(%s): returned %s expected %s", tc.method, tc.path, body, tc.body)
 		}
 	}
+
+	time.Sleep(1000 * time.Millisecond)
 }
 
 // TestStart tests start service method
@@ -329,6 +331,8 @@ func TestRegisterFallback(t *testing.T) {
 			t.Fatalf("%s(%s): returned %s expected %s", tc.method, tc.path, body, tc.body)
 		}
 	}
+
+	time.Sleep(1000 * time.Millisecond)
 }
 
 // Test Use function to try to register middlewares that work before all routes
@@ -358,4 +362,6 @@ func Test_Use(t *testing.T) {
 	if response.StatusCode != StatusUnauthorized {
 		t.Fatalf("%s(%s): returned %d expected %d", MethodGet, "/ping", response.StatusCode, StatusUnauthorized)
 	}
+
+	time.Sleep(1000 * time.Millisecond)
 }
