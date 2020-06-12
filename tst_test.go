@@ -11,7 +11,7 @@ import (
 func ExampleTST() {
 	tst := newTST()
 	tst.Set([]byte("user"), 1)
-	fmt.Println(tst.Get([]byte("user")))
+	fmt.Println(tst.Get([]byte("user")).(int))
 	fmt.Println(tst.Get([]byte("us")))
 	fmt.Println(tst.Get([]byte("user1")))
 	fmt.Println(tst.Get([]byte("not-existing")))

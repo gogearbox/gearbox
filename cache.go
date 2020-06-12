@@ -45,7 +45,7 @@ func (c *lruCache) Get(key []byte) interface{} {
 	if node, ok := c.store.Get(key).(*list.Element); ok {
 		c.list.MoveToFront(node)
 
-		return node.Value.(*list.Element).Value.(*pair).value
+		return node.Value.(*pair).value
 	}
 	return nil
 }
@@ -58,14 +58,14 @@ func (c *lruCache) Set(key []byte, value interface{}) {
 	// update the value if key is existing
 	if node, ok := c.store.Get(key).(*list.Element); ok {
 		c.list.MoveToFront(node)
-		node.Value.(*list.Element).Value.(*pair).value = value
+		node.Value.(*pair).value = value
 
 		return
 	}
 
 	// remove last node if cache is full
 	if c.list.Len() == c.capacity {
-		lastKey := c.list.Back().Value.(*list.Element).Value.(*pair).key
+		lastKey := c.list.Back().Value.(*pair).key
 
 		// delete key's value
 		c.store.Set(lastKey, nil)
@@ -73,10 +73,9 @@ func (c *lruCache) Set(key []byte, value interface{}) {
 		c.list.Remove(c.list.Back())
 	}
 
-	c.store.Set(key, c.list.PushFront(&list.Element{
-		Value: &pair{
-			key:   key,
-			value: value,
-		},
-	}))
+	newValue := &pair{
+		key:   key,
+		value: value,
+	}
+	c.store.Set(key, c.list.PushFront(newValue))
 }
