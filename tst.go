@@ -14,7 +14,7 @@ type tst interface {
 
 type tstImpl struct {
 	root  *tstNode
-	mutex *sync.Mutex
+	mutex sync.Mutex
 }
 
 // Ternary Search Tree node that holds a single character and value if there is
