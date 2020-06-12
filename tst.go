@@ -37,9 +37,8 @@ func (t *tstImpl) Set(key []byte, value interface{}) {
 	}
 
 	t.mutex.Lock()
-	defer t.mutex.Unlock()
-
 	t.root = t.insert(t.root, key, 0, value)
+	t.mutex.Unlock()
 }
 
 // Get gets the value of provided key if it's existing, otherwise returns nil
