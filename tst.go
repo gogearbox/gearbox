@@ -13,7 +13,7 @@ type tst interface {
 
 type tstImpl struct {
 	root  *tstNode
-	mutex sync.Mutex
+	mutex sync.RWMutex
 }
 
 // Ternary Search Tree node that holds a single character and value if there is
@@ -37,8 +37,9 @@ func (t *tstImpl) Set(key []byte, value interface{}) {
 	}
 
 	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
 	t.root = t.insert(t.root, key, 0, value)
-	t.mutex.Unlock()
 }
 
 // Get gets the value of provided key if it's existing, otherwise returns nil
@@ -47,6 +48,10 @@ func (t *tstImpl) Get(key []byte) interface{} {
 	if length < 1 || t.root == nil {
 		return nil
 	}
+
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+
 	lastElm := length - 1
 
 	n := t.root
