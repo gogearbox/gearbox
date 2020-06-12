@@ -11,7 +11,7 @@ import (
 func ExampleTST() {
 	tst := newTST()
 	tst.Set([]byte("user"), 1)
-	fmt.Println(tst.Get([]byte("user")).(int))
+	fmt.Println(tst.Get([]byte("user")))
 	fmt.Println(tst.Get([]byte("us")))
 	fmt.Println(tst.Get([]byte("user1")))
 	fmt.Println(tst.Get([]byte("not-existing")))
@@ -29,9 +29,6 @@ func ExampleTST() {
 	tst.Set([]byte(""), 14)
 	fmt.Println(tst.Get([]byte("")))
 
-	tst.Set([]byte("account2"), 4)
-	tst.Remove([]byte("account2"))
-	fmt.Println(tst.Get([]byte("account2")))
 	// Output:
 	// 1
 	// <nil>
@@ -41,7 +38,6 @@ func ExampleTST() {
 	// 6
 	// 12
 	// 15
-	// <nil>
 	// <nil>
 }
 

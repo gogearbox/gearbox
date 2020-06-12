@@ -9,7 +9,6 @@ type tst interface {
 	Set(word []byte, value interface{})
 	Get(word []byte) interface{}
 	GetString(word string) interface{}
-	Remove(word []byte)
 }
 
 type tstImpl struct {
@@ -40,7 +39,7 @@ func (t *tstImpl) Set(key []byte, value interface{}) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	t.insert(t.root, key, 0, value)
+	t.root = t.insert(t.root, key, 0, value)
 }
 
 // Get gets the value of provided key if it's existing, otherwise returns nil
@@ -77,19 +76,12 @@ func (t *tstImpl) GetString(key string) interface{} {
 	return t.Get([]byte(key))
 }
 
-// Remove deletes the value of provided key if it's existing, otherwise returns nil
-func (t *tstImpl) Remove(key []byte) {
-	if val := t.Get(key); val != nil {
-		t.Set(key, nil)
-	}
-}
-
 // insert is an internal method for inserting a []byte with value in TST
 func (t *tstImpl) insert(n *tstNode, key []byte, index int, value interface{}) *tstNode {
 	char := key[index]
 	lastElm := len(key) - 1
 
-	if t.root == nil {
+	if n == nil {
 		n = &tstNode{char: char}
 	}
 
