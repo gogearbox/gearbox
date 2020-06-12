@@ -1,5 +1,7 @@
 package gearbox
 
+import "sync"
+
 // Basic Implementation for Ternary Search Tree (TST)
 
 // tst returns Ternary Search Tree
@@ -8,6 +10,11 @@ type tst interface {
 	Get(word []byte) interface{}
 	GetString(word string) interface{}
 	Remove(word []byte)
+}
+
+type tstImpl struct {
+	root  *tstNode
+	mutex *sync.Mutex
 }
 
 // Ternary Search Tree node that holds a single character and value if there is
@@ -21,26 +28,30 @@ type tstNode struct {
 
 // newTST returns Ternary Search Tree
 func newTST() tst {
-	return &tstNode{}
+	return &tstImpl{}
 }
 
 // Set adds a value to provided key
-func (t *tstNode) Set(key []byte, value interface{}) {
+func (t *tstImpl) Set(key []byte, value interface{}) {
 	if len(key) < 1 {
 		return
 	}
-	t.insert(t, key, 0, value)
+
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	t.insert(t.root, key, 0, value)
 }
 
 // Get gets the value of provided key if it's existing, otherwise returns nil
-func (t *tstNode) Get(key []byte) interface{} {
+func (t *tstImpl) Get(key []byte) interface{} {
 	length := len(key)
-	if length < 1 || t == nil {
+	if length < 1 || t.root == nil {
 		return nil
 	}
 	lastElm := length - 1
 
-	n := t
+	n := t.root
 	idx := 0
 	char := key[idx]
 	for n != nil {
@@ -62,23 +73,23 @@ func (t *tstNode) Get(key []byte) interface{} {
 }
 
 // Get gets the value of provided key (string) if it's existing, otherwise returns nil
-func (t *tstNode) GetString(key string) interface{} {
+func (t *tstImpl) GetString(key string) interface{} {
 	return t.Get([]byte(key))
 }
 
 // Remove deletes the value of provided key if it's existing, otherwise returns nil
-func (t *tstNode) Remove(key []byte) {
+func (t *tstImpl) Remove(key []byte) {
 	if val := t.Get(key); val != nil {
 		t.Set(key, nil)
 	}
 }
 
 // insert is an internal method for inserting a []byte with value in TST
-func (t *tstNode) insert(n *tstNode, key []byte, index int, value interface{}) *tstNode {
+func (t *tstImpl) insert(n *tstNode, key []byte, index int, value interface{}) *tstNode {
 	char := key[index]
 	lastElm := len(key) - 1
 
-	if n == nil {
+	if t.root == nil {
 		n = &tstNode{char: char}
 	}
 
