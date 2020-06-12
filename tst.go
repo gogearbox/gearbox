@@ -7,6 +7,7 @@ type tst interface {
 	Set(word []byte, value interface{})
 	Get(word []byte) interface{}
 	GetString(word string) interface{}
+	Remove(word []byte)
 }
 
 // Ternary Search Tree node that holds a single character and value if there is
@@ -23,7 +24,7 @@ func newTST() tst {
 	return &tstNode{}
 }
 
-// Set adds a value to provided string
+// Set adds a value to provided key
 func (t *tstNode) Set(key []byte, value interface{}) {
 	if len(key) < 1 {
 		return
@@ -63,6 +64,13 @@ func (t *tstNode) Get(key []byte) interface{} {
 // Get gets the value of provided key (string) if it's existing, otherwise returns nil
 func (t *tstNode) GetString(key string) interface{} {
 	return t.Get([]byte(key))
+}
+
+// Remove deletes the value of provided key if it's existing, otherwise returns nil
+func (t *tstNode) Remove(key []byte) {
+	if val := t.Get(key); val != nil {
+		t.Set(key, nil)
+	}
 }
 
 // insert is an internal method for inserting a []byte with value in TST

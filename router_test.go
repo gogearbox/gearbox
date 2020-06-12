@@ -4,6 +4,21 @@ import (
 	"testing"
 )
 
+// setupGearbox returns instace of gearbox struct
+func setupGearbox(settings ...*Settings) *gearbox {
+	gb := new(gearbox)
+	gb.registeredRoutes = make([]*route, 0)
+
+	if len(settings) > 0 {
+		gb.settings = settings[0]
+	} else {
+		gb.settings = &Settings{}
+	}
+
+	gb.cache = newCache(cacheSizeDefault)
+	return gb
+}
+
 // TestValidateRoutePath tests if provided paths are valid or not
 func TestValidateRoutePath(t *testing.T) {
 	// test cases
@@ -75,8 +90,7 @@ func TestRegisterRoute(t *testing.T) {
 	}
 
 	// create gearbox instance
-	gb := new(gearbox)
-	gb.registeredRoutes = make([]*route, 0)
+	gb := setupGearbox()
 
 	// counter for valid routes
 	validCounter := 0
@@ -109,8 +123,7 @@ func TestRegisterRoute(t *testing.T) {
 // TestRegisterInvalidRoute tests registering invalid routes
 func TestRegisterInvalidRoute(t *testing.T) {
 	// create gearbox instance
-	gb := new(gearbox)
-	gb.registeredRoutes = make([]*route, 0)
+	gb := setupGearbox()
 
 	// test handler is nil
 	if err := gb.registerRoute([]byte(MethodGet), []byte("invalid Path"), emptyHandlersChain); err == nil {
@@ -259,8 +272,9 @@ func TestIsValidEndpoint(t *testing.T) {
 // TestConstructRoutingTree tests constructing routing tree and matching routes properly
 func TestConstructRoutingTree(t *testing.T) {
 	// create gearbox instance
-	gb := new(gearbox)
-	gb.registeredRoutes = make([]*route, 0)
+	gb := setupGearbox(&Settings{
+		CacheSize: 1,
+	})
 
 	// testing routes
 	routes := []struct {
@@ -302,6 +316,8 @@ func TestConstructRoutingTree(t *testing.T) {
 	}{
 		{method: []byte(MethodPut), path: []byte("/admin/welcome"), match: false, params: make(map[string]string)},
 		{method: []byte(MethodGet), path: []byte("/articles/search"), match: true, params: make(map[string]string)},
+		{method: []byte(MethodGet), path: []byte("/articles/test"), match: true, params: make(map[string]string)},
+		{method: []byte(MethodGet), path: []byte("/articles/test"), match: true, params: make(map[string]string)},
 		{method: []byte(MethodGet), path: []byte("/articles/test"), match: true, params: make(map[string]string)},
 		{method: []byte(MethodGet), path: []byte("/articles/204"), match: true, params: make(map[string]string)},
 		{method: []byte(MethodGet), path: []byte("/posts"), match: true, params: make(map[string]string)},
@@ -345,8 +361,7 @@ func TestConstructRoutingTree(t *testing.T) {
 // TestNullRoutingTree tests matching with null routing tree
 func TestNullRoutingTree(t *testing.T) {
 	// create gearbox instance
-	gb := new(gearbox)
-	gb.registeredRoutes = make([]*route, 0)
+	gb := setupGearbox()
 
 	// register route
 	gb.registerRoute([]byte(MethodGet), []byte("/*"), emptyHandlersChain)
@@ -360,8 +375,7 @@ func TestNullRoutingTree(t *testing.T) {
 // TestMatchAll tests matching all requests with one handler
 func TestMatchAll(t *testing.T) {
 	// create gearbox instance
-	gb := new(gearbox)
-	gb.registeredRoutes = make([]*route, 0)
+	gb := setupGearbox()
 
 	// register route
 	gb.registerRoute([]byte(MethodGet), []byte("/*"), emptyHandlersChain)
@@ -381,8 +395,7 @@ func TestMatchAll(t *testing.T) {
 // for the same path and method
 func TestConstructRoutingTreeConflict(t *testing.T) {
 	// create gearbox instance
-	gb := new(gearbox)
-	gb.registeredRoutes = make([]*route, 0)
+	gb := setupGearbox()
 
 	// register routes
 	gb.registerRoute([]byte(MethodGet), []byte("/articles/test"), emptyHandlersChain)
@@ -397,8 +410,7 @@ func TestConstructRoutingTreeConflict(t *testing.T) {
 // matchRoute() returns nil
 func TestNoRegisteredFallback(t *testing.T) {
 	// create gearbox instance
-	gb := new(gearbox)
-	gb.registeredRoutes = make([]*route, 0)
+	gb := setupGearbox()
 
 	// register routes
 	gb.registerRoute([]byte(MethodGet), []byte("/articles"), emptyHandlersChain)
@@ -414,8 +426,7 @@ func TestNoRegisteredFallback(t *testing.T) {
 // matchRoute() returns the non-nil registered fallback handler
 func TestFallback(t *testing.T) {
 	// create gearbox instance
-	gb := new(gearbox)
-	gb.registeredRoutes = make([]*route, 0)
+	gb := setupGearbox()
 
 	// register routes
 	gb.registerRoute([]byte(MethodGet), []byte("/articles"), emptyHandlersChain)
@@ -434,7 +445,7 @@ func TestFallback(t *testing.T) {
 // with a nil handler
 func TestInvalidFallback(t *testing.T) {
 	// create gearbox instance
-	gb := new(gearbox)
+	gb := setupGearbox()
 
 	// attempt to register an invalid (nil) fallback handler
 	if err := gb.registerFallback(nil); err == nil {

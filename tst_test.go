@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// ExampleTST tests TST set and get methods
+// ExampleTST tests TST set, get and remove methods
 func ExampleTST() {
 	tst := newTST()
 	tst.Set([]byte("user"), 1)
@@ -28,6 +28,10 @@ func ExampleTST() {
 	fmt.Println(tst.Get([]byte("حساب")).(int))
 	tst.Set([]byte(""), 14)
 	fmt.Println(tst.Get([]byte("")))
+
+	tst.Set([]byte("account2"), 4)
+	tst.Remove([]byte("account2"))
+	fmt.Println(tst.Get([]byte("account2")))
 	// Output:
 	// 1
 	// <nil>
@@ -37,6 +41,7 @@ func ExampleTST() {
 	// 6
 	// 12
 	// 15
+	// <nil>
 	// <nil>
 }
 

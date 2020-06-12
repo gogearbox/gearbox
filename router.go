@@ -99,6 +99,10 @@ func (gb *gearbox) registerRoute(method, path []byte, handlers handlersChain) er
 		return fmt.Errorf("route %s is not valid! - %s", path, err.Error())
 	}
 
+	if !gb.settings.CaseSensitive {
+		path = bytes.ToLower(path)
+	}
+
 	// Add route to registered routes
 	gb.registeredRoutes = append(gb.registeredRoutes, &route{
 		Path:     path,
@@ -197,7 +201,8 @@ func isValidEndpoint(endpoints []*endpoint, newEndpoint *endpoint) bool {
 // trimPath trims left and right slashes in path
 func trimPath(path []byte) []byte {
 	pathLastIndex := len(path) - 1
-	if path[pathLastIndex] == '/' && pathLastIndex > 0 {
+
+	for path[pathLastIndex] == '/' && pathLastIndex > 0 {
 		pathLastIndex--
 	}
 
@@ -297,10 +302,12 @@ func (gb *gearbox) matchRoute(method, path []byte) (handlersChain, tst) {
 func matchEndpointParams(ep *endpoint, paths [][]byte, pathIndex int) (tst, bool) {
 	paramDic := newTST()
 	endpointParams := ep.Params
+	endpointParamsLen := len(endpointParams)
 	pathsLen := len(paths)
 
-	for pIdx := range endpointParams {
-		if endpointParams[pIdx].Type == ptMatchAll {
+	paramIdx := 0
+	for paramIdx < endpointParamsLen {
+		if endpointParams[paramIdx].Type == ptMatchAll {
 			// Last parameter, so we can return
 			return paramDic, true
 		}
@@ -310,20 +317,21 @@ func matchEndpointParams(ep *endpoint, paths [][]byte, pathIndex int) (tst, bool
 		}
 
 		if len(paths[pathIndex]) == 0 {
+			pathIndex++
 			continue
 		}
 
-		if endpointParams[pIdx].Type == ptParam {
-			paramDic.Set(endpointParams[pIdx].Name, paths[pathIndex])
-		} else if endpointParams[pIdx].Type == ptRegexp {
-			if match, _ := regexp.Match(endpointParams[pIdx].Value, paths[pathIndex]); match {
-				paramDic.Set(endpointParams[pIdx].Name, paths[pathIndex])
+		if endpointParams[paramIdx].Type == ptParam {
+			paramDic.Set(endpointParams[paramIdx].Name, paths[pathIndex])
+		} else if endpointParams[paramIdx].Type == ptRegexp {
+			if match, _ := regexp.Match(endpointParams[paramIdx].Value, paths[pathIndex]); match {
+				paramDic.Set(endpointParams[paramIdx].Name, paths[pathIndex])
 			} else {
 				return nil, false
 			}
 		}
 
-		pIdx++
+		paramIdx++
 		pathIndex++
 	}
 
@@ -362,7 +370,19 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersCha
 		return nil, nil
 	}
 
-	paths := bytes.Split(trimPath(path), []byte("/"))
+	if !gb.settings.CaseSensitive {
+		path = bytes.ToLower(path)
+	}
+
+	trimmedPath := trimPath(path)
+
+	// Try to get from cache
+	cacheKey := append(method, trimmedPath...)
+	if cacheResult, ok := gb.cache.Get(cacheKey).(*matchParamsResult); ok {
+		return cacheResult.handlers, cacheResult.params
+	}
+
+	paths := bytes.Split(trimmedPath, []byte("/"))
 
 	var wg sync.WaitGroup
 	lastMatchedNodes := []*matchParamsResult{{}}
@@ -396,6 +416,10 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersCha
 	// Return longest prefix match
 	for i := lastMatchedNodesIndex - 1; i >= 0; i-- {
 		if lastMatchedNodes[i].matched {
+			go func(key []byte, matchResult *matchParamsResult) {
+				gb.cache.Set(key, matchResult)
+			}(cacheKey, lastMatchedNodes[i])
+
 			return lastMatchedNodes[i].handlers, lastMatchedNodes[i].params
 		}
 	}

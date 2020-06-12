@@ -27,6 +27,10 @@ Listening on %s
 `
 )
 
+const (
+	cacheSizeDefault = 1000 // default number of entries that can cache hold
+)
+
 // HTTP methods were copied from net/http.
 const (
 	MethodGet     = "GET"     // RFC 7231, 4.3.1
@@ -134,14 +138,38 @@ type gearbox struct {
 	address            string // server address
 	handlers           handlersChain
 	registeredFallback *routerFallback
+	cache              cache
+	settings           *Settings
+}
+
+// Settings struct holds server settings
+type Settings struct {
+	CaseSensitive         bool // default false
+	DisableStartupMessage bool // default false
+	CacheSize             int  // default 1000
 }
 
 // New creates a new instance of gearbox
-func New() Gearbox {
+func New(settings ...*Settings) Gearbox {
 	gb := new(gearbox)
 	gb.registeredRoutes = make([]*route, 0)
 	gb.httpServer = gb.newHTTPServer()
+
+	if len(settings) > 0 {
+		populateSettings(settings[0])
+		gb.settings = settings[0]
+	} else {
+		gb.settings = &Settings{}
+	}
+
 	return gb
+}
+
+// populateSettings sets default settings for settings that don't have values set
+func populateSettings(settings *Settings) {
+	if settings.CacheSize == 0 {
+		settings.CacheSize = cacheSizeDefault
+	}
 }
 
 // Start handling requests
@@ -151,12 +179,18 @@ func (gb *gearbox) Start(address string) error {
 		return fmt.Errorf("unable to construct routing %s", err.Error())
 	}
 
+	gb.cache = newCache(gb.settings.CacheSize)
+
 	ln, err := net.Listen("tcp4", address)
 	if err != nil {
 		return err
 	}
 	gb.address = address
-	log.Printf(banner, Version, gb.address)
+
+	if !gb.settings.DisableStartupMessage {
+		log.Printf(banner, Version, gb.address)
+	}
+
 	return gb.httpServer.Serve(ln)
 }
 
