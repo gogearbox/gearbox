@@ -23,11 +23,12 @@ func newTST() tst {
 	return &tstNode{}
 }
 
-// Set adds a value to provided string
+// Set adds a value to provided key
 func (t *tstNode) Set(key []byte, value interface{}) {
 	if len(key) < 1 {
 		return
 	}
+
 	t.insert(t, key, 0, value)
 }
 

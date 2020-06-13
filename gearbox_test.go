@@ -38,6 +38,7 @@ func (c *fakeConn) Write(b []byte) (int, error) {
 
 // startGearbox constructs routing tree and creates server
 func startGearbox(gb *gearbox) {
+	gb.cache = newCache(cacheSizeDefault)
 	gb.constructRoutingTree()
 	gb.httpServer = &fasthttp.Server{
 		Handler:      gb.handler,
@@ -155,8 +156,9 @@ func TestMethods(t *testing.T) {
 	}
 
 	// get instance of gearbox
-	gb := new(gearbox)
-	gb.registeredRoutes = make([]*route, 0)
+	gb := setupGearbox(&Settings{
+		CaseSensitive: true,
+	})
 
 	// register routes according to method
 	for _, r := range routes {
@@ -179,6 +181,7 @@ func TestMethods(t *testing.T) {
 		{method: MethodHead, path: "/articles/test", statusCode: StatusOK},
 		{method: MethodPost, path: "/articles/204", statusCode: StatusOK},
 		{method: MethodPost, path: "/articles/205", statusCode: StatusUnauthorized},
+		{method: MethodPost, path: "/Articles/205", statusCode: StatusNotFound},
 		{method: MethodPost, path: "/articles/206", statusCode: StatusNotFound},
 		{method: MethodGet, path: "/ping", statusCode: StatusOK, body: "pong"},
 		{method: MethodPut, path: "/posts", statusCode: StatusOK},
@@ -219,7 +222,9 @@ func TestMethods(t *testing.T) {
 
 // TestStart tests start service method
 func TestStart(t *testing.T) {
-	gb := New()
+	gb := New(&Settings{
+		DisableStartupMessage: true,
+	})
 
 	go func() {
 		time.Sleep(1000 * time.Millisecond)
@@ -277,6 +282,7 @@ func TestRegisterFallback(t *testing.T) {
 	// get instance of gearbox
 	gb := new(gearbox)
 	gb.registeredRoutes = make([]*route, 0)
+	gb.settings = &Settings{}
 
 	// register valid route
 	gb.Get("/ping", pingHandler)
@@ -330,6 +336,7 @@ func Test_Use(t *testing.T) {
 	// get instance of gearbox
 	gb := new(gearbox)
 	gb.registeredRoutes = make([]*route, 0)
+	gb.settings = &Settings{}
 
 	// register valid route
 	gb.Get("/ping", pingHandler)
