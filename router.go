@@ -417,10 +417,8 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersCha
 	for i := lastMatchedNodesIndex - 1; i >= 0; i-- {
 		if lastMatchedNodes[i].matched {
 			go func(key []byte, matchResult *matchParamsResult) {
-				gb.cacheLock.Lock()
 				gb.cache.Set(key, matchResult)
-				gb.cacheLock.Unlock()
-			}(cacheKey, lastMatchedNodes[i])
+			}(append(make([]byte, 0, len(cacheKey)), cacheKey...), lastMatchedNodes[i])
 
 			return lastMatchedNodes[i].handlers, lastMatchedNodes[i].params
 		}
