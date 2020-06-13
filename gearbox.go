@@ -116,16 +116,16 @@ const (
 type Gearbox interface {
 	Start(address string) error
 	Stop() error
-	Get(path string, handlers ...handlerFunc) error
-	Head(path string, handlers ...handlerFunc) error
-	Post(path string, handlers ...handlerFunc) error
-	Put(path string, handlers ...handlerFunc) error
-	Patch(path string, handlers ...handlerFunc) error
-	Delete(path string, handlers ...handlerFunc) error
-	Connect(path string, handlers ...handlerFunc) error
-	Options(path string, handlers ...handlerFunc) error
-	Trace(path string, handlers ...handlerFunc) error
-	Method(method, path string, handlers ...handlerFunc) error
+	Get(path string, handlers ...handlerFunc) *route
+	Head(path string, handlers ...handlerFunc) *route
+	Post(path string, handlers ...handlerFunc) *route
+	Put(path string, handlers ...handlerFunc) *route
+	Patch(path string, handlers ...handlerFunc) *route
+	Delete(path string, handlers ...handlerFunc) *route
+	Connect(path string, handlers ...handlerFunc) *route
+	Options(path string, handlers ...handlerFunc) *route
+	Trace(path string, handlers ...handlerFunc) *route
+	Method(method, path string, handlers ...handlerFunc) *route
 	Fallback(handlers ...handlerFunc) error
 	Use(middlewares ...handlerFunc)
 }
@@ -223,52 +223,52 @@ func (gb *gearbox) Stop() error {
 }
 
 // Get registers an http relevant method
-func (gb *gearbox) Get(path string, handlers ...handlerFunc) error {
+func (gb *gearbox) Get(path string, handlers ...handlerFunc) *route {
 	return gb.registerRoute([]byte(MethodGet), []byte(path), handlers)
 }
 
 // Head registers an http relevant method
-func (gb *gearbox) Head(path string, handlers ...handlerFunc) error {
+func (gb *gearbox) Head(path string, handlers ...handlerFunc) *route {
 	return gb.registerRoute([]byte(MethodHead), []byte(path), handlers)
 }
 
 // Post registers an http relevant method
-func (gb *gearbox) Post(path string, handlers ...handlerFunc) error {
+func (gb *gearbox) Post(path string, handlers ...handlerFunc) *route {
 	return gb.registerRoute([]byte(MethodPost), []byte(path), handlers)
 }
 
 // Put registers an http relevant method
-func (gb *gearbox) Put(path string, handlers ...handlerFunc) error {
+func (gb *gearbox) Put(path string, handlers ...handlerFunc) *route {
 	return gb.registerRoute([]byte(MethodPut), []byte(path), handlers)
 }
 
 // Patch registers an http relevant method
-func (gb *gearbox) Patch(path string, handlers ...handlerFunc) error {
+func (gb *gearbox) Patch(path string, handlers ...handlerFunc) *route {
 	return gb.registerRoute([]byte(MethodPatch), []byte(path), handlers)
 }
 
 // Delete registers an http relevant method
-func (gb *gearbox) Delete(path string, handlers ...handlerFunc) error {
+func (gb *gearbox) Delete(path string, handlers ...handlerFunc) *route {
 	return gb.registerRoute([]byte(MethodDelete), []byte(path), handlers)
 }
 
 // Connect registers an http relevant method
-func (gb *gearbox) Connect(path string, handlers ...handlerFunc) error {
+func (gb *gearbox) Connect(path string, handlers ...handlerFunc) *route {
 	return gb.registerRoute([]byte(MethodConnect), []byte(path), handlers)
 }
 
 // Options registers an http relevant method
-func (gb *gearbox) Options(path string, handlers ...handlerFunc) error {
+func (gb *gearbox) Options(path string, handlers ...handlerFunc) *route {
 	return gb.registerRoute([]byte(MethodOptions), []byte(path), handlers)
 }
 
 // Trace registers an http relevant method
-func (gb *gearbox) Trace(path string, handlers ...handlerFunc) error {
+func (gb *gearbox) Trace(path string, handlers ...handlerFunc) *route {
 	return gb.registerRoute([]byte(MethodTrace), []byte(path), handlers)
 }
 
 // Trace registers an http relevant method
-func (gb *gearbox) Method(method, path string, handlers ...handlerFunc) error {
+func (gb *gearbox) Method(method, path string, handlers ...handlerFunc) *route {
 	return gb.registerRoute([]byte(method), []byte(path), handlers)
 }
 

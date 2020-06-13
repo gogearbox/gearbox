@@ -88,27 +88,32 @@ func validateRoutePath(path []byte) error {
 }
 
 // registerRoute registers handler with method and path
-func (gb *gearbox) registerRoute(method, path []byte, handlers handlersChain) error {
-	// Handler is not provided
-	if handlers == nil {
-		return fmt.Errorf("route %s with method %s does not contain any handlers", path, method)
-	}
-
-	// Check if path is valid or not
-	if err := validateRoutePath(path); err != nil {
-		return fmt.Errorf("route %s is not valid! - %s", path, err.Error())
-	}
+func (gb *gearbox) registerRoute(method, path []byte, handlers handlersChain) *route {
 
 	if !gb.settings.CaseSensitive {
 		path = bytes.ToLower(path)
 	}
 
-	// Add route to registered routes
-	gb.registeredRoutes = append(gb.registeredRoutes, &route{
+	route := &route{
 		Path:     path,
 		Method:   method,
 		Handlers: handlers,
-	})
+	}
+
+	// Add route to registered routes
+	gb.registeredRoutes = append(gb.registeredRoutes, route)
+	return route
+}
+
+func (gb *gearbox) route(path []byte, routes []*route) error {
+	// Check if path is valid or not
+	if err := validateRoutePath(path); err != nil {
+		return fmt.Errorf("route %s is not valid! - %s", path, err.Error())
+	}
+
+	for _, route := range routes {
+		route.Path = append(path, route.Path...)
+	}
 	return nil
 }
 
@@ -221,6 +226,17 @@ func (gb *gearbox) constructRoutingTree() error {
 
 	for _, route := range gb.registeredRoutes {
 		currentNode := gb.routingTreeRoot
+
+		// Handler is not provided
+		if route.Handlers == nil {
+			return fmt.Errorf("route %s with method %s does not contain any handlers", route.Path, route.Method)
+		}
+
+		// Check if path is valid or not
+		if err := validateRoutePath(route.Path); err != nil {
+			return fmt.Errorf("route %s is not valid! - %s", route.Path, err.Error())
+		}
+
 		params := make([]*param, 0)
 
 		// Split path into slices of parts
