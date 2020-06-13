@@ -38,8 +38,8 @@ func newCache(capacity int) cache {
 
 // Get returns value of provided key if it's existing
 func (c *lruCache) Get(key []byte) interface{} {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
 
 	// check if list node exists
 	if node, ok := c.store.Get(key).(*list.Element); ok {
