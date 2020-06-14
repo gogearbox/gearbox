@@ -156,7 +156,7 @@ type Settings struct {
 	// Enable case sensitive routing
 	CaseSensitive bool // default false
 
-	// Maximum size of LRU cache that will be used in routing
+	// Maximum size of LRU cache that will be used in routing if it's enabled
 	CacheSize int // default 1000
 
 	// ServerName for sending in response headers
@@ -167,6 +167,9 @@ type Settings struct {
 
 	// Maximum number of concurrent connections
 	Concurrency int // default 256 * 1024
+
+	// LRU caching used to speed up routing
+	DisableCaching bool // default false
 
 	// Disable printing gearbox banner
 	DisableStartupMessage bool // default false

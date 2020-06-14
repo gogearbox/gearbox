@@ -38,10 +38,6 @@ func newCache(capacity int) cache {
 
 // Get returns value of provided key if it's existing
 func (c *lruCache) Get(key []byte) interface{} {
-	if c.capacity == 0 {
-		return nil
-	}
-
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
