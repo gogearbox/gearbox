@@ -271,7 +271,7 @@ func TestIsValidEndpoint(t *testing.T) {
 func TestConstructRoutingTree(t *testing.T) {
 	// create gearbox instance
 	gb := setupGearbox(&Settings{
-		CacheSize: 2,
+		CacheSize: 1,
 	})
 
 	// testing routes
