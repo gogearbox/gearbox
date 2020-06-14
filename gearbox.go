@@ -206,8 +206,20 @@ func New(settings ...*Settings) Gearbox {
 	gb.registeredRoutes = make([]*Route, 0)
 
 	if len(settings) > 0 {
-		populateSettings(settings[0])
 		gb.settings = settings[0]
+
+		// set default settings for settings that don't have values set
+		if gb.settings.CacheSize <= 0 {
+			gb.settings.CacheSize = defaultCacheSize
+		}
+
+		if gb.settings.MaxRequestBodySize <= 0 {
+			gb.settings.MaxRequestBodySize = defaultMaxRequestBodySize
+		}
+
+		if gb.settings.Concurrency <= 0 {
+			gb.settings.Concurrency = defaultConcurrency
+		}
 	} else {
 		gb.settings = &Settings{}
 	}
@@ -215,21 +227,6 @@ func New(settings ...*Settings) Gearbox {
 	gb.httpServer = gb.newHTTPServer()
 
 	return gb
-}
-
-// populateSettings sets default settings for settings that don't have values set
-func populateSettings(settings *Settings) {
-	if settings.CacheSize <= 0 {
-		settings.CacheSize = defaultCacheSize
-	}
-
-	if settings.MaxRequestBodySize <= 0 {
-		settings.MaxRequestBodySize = defaultMaxRequestBodySize
-	}
-
-	if settings.Concurrency <= 0 {
-		settings.Concurrency = defaultConcurrency
-	}
 }
 
 // Start handling requests

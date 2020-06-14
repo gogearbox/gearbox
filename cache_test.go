@@ -21,11 +21,15 @@ func ExampleCache() {
 	cache.Set([]byte("user5"), 5)
 	fmt.Println(cache.Get([]byte("user3")))
 
+	cache2 := newCache(0)
+	cache2.Set([]byte("user1"), 1)
+	fmt.Println(cache2.Get([]byte("user1")))
 	// Output:
 	// 1
 	// 2
 	// 3
 	// <nil>
 	// 2
+	// <nil>
 	// <nil>
 }
