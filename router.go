@@ -400,8 +400,8 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersCha
 	trimmedPath := trimPath(path)
 
 	// Try to get from cache if it's enabled
+	cacheKey := append(method, trimmedPath...)
 	if !gb.settings.DisableCaching {
-		cacheKey := append(method, trimmedPath...)
 		if cacheResult, ok := gb.cache.Get(cacheKey).(*matchParamsResult); ok {
 			return cacheResult.Handlers, cacheResult.Params
 		}
