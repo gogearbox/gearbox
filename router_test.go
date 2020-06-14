@@ -34,6 +34,7 @@ func TestValidateRoutePath(t *testing.T) {
 		{input: []byte("/user/*"), isErr: false},
 		{input: []byte("/user/:name"), isErr: false},
 		{input: []byte("/user/:name/:name"), isErr: true},
+		{input: []byte("/user/:name?/get"), isErr: true},
 	}
 
 	for _, tt := range tests {
@@ -294,7 +295,7 @@ func TestConstructRoutingTree(t *testing.T) {
 		{method: []byte(MethodGet), path: []byte("/books/search/:pattern:([a-z]+)"), handler: emptyHandlersChain},
 		{method: []byte(MethodGet), path: []byte("/books/search/:pattern"), handler: emptyHandlersChain},
 		{method: []byte(MethodGet), path: []byte("/books/search/:pattern1/:pattern2/:pattern3"), handler: emptyHandlersChain},
-		{method: []byte(MethodGet), path: []byte("/books/search/*"), handler: emptyHandlersChain},
+		{method: []byte(MethodGet), path: []byte("/books//search/*"), handler: emptyHandlersChain},
 		{method: []byte(MethodGet), path: []byte("/account/:name?"), handler: emptyHandlersChain},
 		{method: []byte(MethodGet), path: []byte("/profile/:name:([a-z]+)?"), handler: emptyHandlersChain},
 		{method: []byte(MethodGet), path: []byte("/order/:name1/:name2:([a-z]+)?"), handler: emptyHandlersChain},
