@@ -295,6 +295,9 @@ func TestConstructRoutingTree(t *testing.T) {
 		{method: []byte(MethodGet), path: []byte("/books/search/:pattern"), handler: emptyHandlersChain},
 		{method: []byte(MethodGet), path: []byte("/books/search/:pattern1/:pattern2/:pattern3"), handler: emptyHandlersChain},
 		{method: []byte(MethodGet), path: []byte("/books/search/*"), handler: emptyHandlersChain},
+		{method: []byte(MethodGet), path: []byte("/account/:name?"), handler: emptyHandlersChain},
+		{method: []byte(MethodGet), path: []byte("/profile/:name:([a-z]+)?"), handler: emptyHandlersChain},
+		{method: []byte(MethodGet), path: []byte("/order/:name1/:name2:([a-z]+)?"), handler: emptyHandlersChain},
 	}
 
 	// register routes
@@ -333,6 +336,15 @@ func TestConstructRoutingTree(t *testing.T) {
 		{method: []byte(MethodGet), path: []byte("/books/search/123"), match: true, params: map[string]string{"pattern": "123"}},
 		{method: []byte(MethodGet), path: []byte("/books/search/test1/test2/test3"), match: true, params: map[string]string{"pattern1": "test1", "pattern2": "test2", "pattern3": "test3"}},
 		{method: []byte(MethodGet), path: []byte("/books/search/test/test2"), match: true, params: make(map[string]string)},
+		{method: []byte(MethodGet), path: []byte("/books/search/test/test2"), match: true, params: make(map[string]string)},
+		{method: []byte(MethodGet), path: []byte("/account/testuser"), match: true, params: map[string]string{"name": "testuser"}},
+		{method: []byte(MethodGet), path: []byte("/account"), match: true, params: make(map[string]string)},
+		{method: []byte(MethodPut), path: []byte("/account/test1/test2"), match: false, params: make(map[string]string)},
+		{method: []byte(MethodGet), path: []byte("/profile/testuser"), match: true, params: map[string]string{"name": "testuser"}},
+		{method: []byte(MethodGet), path: []byte("/profile"), match: true, params: make(map[string]string)},
+		{method: []byte(MethodGet), path: []byte("/order/test1"), match: true, params: map[string]string{"name1": "test1"}},
+		{method: []byte(MethodGet), path: []byte("/order/test1/test2/"), match: true, params: map[string]string{"name1": "test1", "name2": "test2"}},
+		{method: []byte(MethodPut), path: []byte("/order/test1/test2/test3"), match: false, params: make(map[string]string)},
 	}
 
 	// test matching routes

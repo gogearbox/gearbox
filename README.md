@@ -84,6 +84,11 @@ func main() {
 		fmt.Printf("%s\n", ctx.Params.GetString("user"))
 	})
 
+	// Handler with optional parameter
+	gb.Get("/search/:pattern?", func(ctx *gearbox.Context) {
+		fmt.Printf("%s\n", ctx.Params.GetString("pattern"))
+	})
+
 	// Handler with regex parameter
 	gb.Get("/book/:name:([a-z]+[0-3])", func(ctx *gearbox.Context) {
 		fmt.Printf("%s\n", ctx.Params.GetString("name"))
