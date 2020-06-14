@@ -455,7 +455,7 @@ func TestGroupRouting(t *testing.T) {
 	// create gearbox instance
 	gb := setupGearbox()
 	routes := []*Route{gb.Get("/id", emptyHandler), gb.Post("/abc", emptyHandler), gb.Post("/abcd", emptyHandler)}
-	gb.group("/account", routes)
+	gb.Group("/account", routes)
 	// attempt to register an invalid (nil) fallback handler
 	if err := gb.constructRoutingTree(); err != nil {
 		t.Errorf("Grout routing failed, error: %v", err)
@@ -467,7 +467,7 @@ func TestNestedGroupRouting(t *testing.T) {
 	// create gearbox instance
 	gb := setupGearbox()
 	routes := []*Route{gb.Get("/id", emptyHandler), gb.Post("/abc", emptyHandler), gb.Post("/abcd", emptyHandler)}
-	gb.group("/account", gb.group("/api", routes))
+	gb.Group("/account", gb.Group("/api", routes))
 	// attempt to register an invalid (nil) fallback handler
 	if err := gb.constructRoutingTree(); err != nil {
 		t.Errorf("Grout routing failed, error: %v", err)

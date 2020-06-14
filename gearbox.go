@@ -128,6 +128,7 @@ type Gearbox interface {
 	Method(method, path string, handlers ...handlerFunc) *Route
 	Fallback(handlers ...handlerFunc) error
 	Use(middlewares ...handlerFunc)
+	Group(path string, routes []*Route) []*Route
 }
 
 // gearbox implements Gearbox interface

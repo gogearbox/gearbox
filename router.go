@@ -99,7 +99,7 @@ func (gb *gearbox) registerRoute(method, path []byte, handlers handlersChain) *R
 	return route
 }
 
-func (gb *gearbox) group(path string, routes []*Route) []*Route {
+func (gb *gearbox) Group(path string, routes []*Route) []*Route {
 	for _, route := range routes {
 		route.Path = append([]byte(path), route.Path...)
 	}
