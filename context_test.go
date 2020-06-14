@@ -18,7 +18,7 @@ func Test_Next(t *testing.T) {
 
 	// get instance of gearbox
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*route, 0)
+	gb.registeredRoutes = make([]*Route, 0)
 	gb.settings = &Settings{}
 
 	// register routes according to method

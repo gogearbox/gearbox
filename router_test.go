@@ -7,7 +7,7 @@ import (
 // setupGearbox returns instace of gearbox struct
 func setupGearbox(settings ...*Settings) *gearbox {
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*route, 0)
+	gb.registeredRoutes = make([]*Route, 0)
 
 	if len(settings) > 0 {
 		gb.settings = settings[0]
@@ -450,13 +450,24 @@ func TestInvalidFallback(t *testing.T) {
 	}
 }
 
-// TestInvalidFallback tests that a fallback cannot be registered
-// with a nil handler
+// TestGroupRouting tests that you can do group routing
 func TestGroupRouting(t *testing.T) {
 	// create gearbox instance
 	gb := setupGearbox()
-	routes := []*route{gb.Get("/id", emptyHandler), gb.Post("/abc", emptyHandler), gb.Post("/abcd", emptyHandler)}
-	gb.route("/account", routes)
+	routes := []*Route{gb.Get("/id", emptyHandler), gb.Post("/abc", emptyHandler), gb.Post("/abcd", emptyHandler)}
+	gb.group("/account", routes)
+	// attempt to register an invalid (nil) fallback handler
+	if err := gb.constructRoutingTree(); err != nil {
+		t.Errorf("Grout routing failed, error: %v", err)
+	}
+}
+
+// TestNestedGroupRouting tests that you can do group routing inside a group routing
+func TestNestedGroupRouting(t *testing.T) {
+	// create gearbox instance
+	gb := setupGearbox()
+	routes := []*Route{gb.Get("/id", emptyHandler), gb.Post("/abc", emptyHandler), gb.Post("/abcd", emptyHandler)}
+	gb.group("/account", gb.group("/api", routes))
 	// attempt to register an invalid (nil) fallback handler
 	if err := gb.constructRoutingTree(); err != nil {
 		t.Errorf("Grout routing failed, error: %v", err)

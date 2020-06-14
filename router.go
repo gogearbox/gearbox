@@ -35,12 +35,6 @@ type endpoint struct {
 	Handlers handlersChain
 }
 
-type route struct {
-	Method   []byte
-	Path     []byte
-	Handlers handlersChain
-}
-
 type routerFallback struct {
 	Handlers handlersChain
 }
@@ -88,13 +82,13 @@ func validateRoutePath(path []byte) error {
 }
 
 // registerRoute registers handler with method and path
-func (gb *gearbox) registerRoute(method, path []byte, handlers handlersChain) *route {
+func (gb *gearbox) registerRoute(method, path []byte, handlers handlersChain) *Route {
 
 	if !gb.settings.CaseSensitive {
 		path = bytes.ToLower(path)
 	}
 
-	route := &route{
+	route := &Route{
 		Path:     path,
 		Method:   method,
 		Handlers: handlers,
@@ -105,11 +99,11 @@ func (gb *gearbox) registerRoute(method, path []byte, handlers handlersChain) *r
 	return route
 }
 
-func (gb *gearbox) route(path string, routes []*route) error {
+func (gb *gearbox) group(path string, routes []*Route) []*Route {
 	for _, route := range routes {
 		route.Path = append([]byte(path), route.Path...)
 	}
-	return nil
+	return routes
 }
 
 // registerFallback registers a single handler that will match only if all other routes fail to match
