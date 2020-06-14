@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 
 	"github.com/valyala/fasthttp"
 )
 
 // Exported constants
 const (
-	Version = "0.0.3-beta" // Version of gearbox
-	Name    = "Gearbox"    // Name of gearbox
+	Version = "1.0.0"   // Version of gearbox
+	Name    = "Gearbox" // Name of gearbox
 	// http://patorjk.com/software/taag/#p=display&f=Big%20Money-ne&t=Gearbox
 	banner = `
   /$$$$$$                                /$$                          
@@ -28,7 +29,14 @@ Listening on %s
 )
 
 const (
-	cacheSizeDefault = 1000 // default number of entries that can cache hold
+	// defaultCacheSize is number of entries that can cache hold
+	defaultCacheSize = 1000
+
+	// defaultConcurrency is the maximum number of concurrent connections
+	defaultConcurrency = 256 * 1024
+
+	// defaultMaxRequestBodySize is the maximum request body size the server
+	defaultMaxRequestBodySize = 4 * 1024 * 1024
 )
 
 // HTTP methods were copied from net/http.
@@ -145,9 +153,47 @@ type gearbox struct {
 
 // Settings struct holds server settings
 type Settings struct {
-	CaseSensitive         bool // default false
+	// Enable case sensitive routing
+	CaseSensitive bool // default false
+
+	// Maximum size of LRU cache that will be used in routing if it's enabled
+	CacheSize int // default 1000
+
+	// ServerName for sending in response headers
+	ServerName string // default ""
+
+	// Maximum request body size
+	MaxRequestBodySize int // default 4 * 1024 * 1024
+
+	// Maximum number of concurrent connections
+	Concurrency int // default 256 * 1024
+
+	// LRU caching used to speed up routing
+	DisableCaching bool // default false
+
+	// Disable printing gearbox banner
 	DisableStartupMessage bool // default false
-	CacheSize             int  // default 1000
+
+	// Disable keep-alive connections, the server will close incoming connections after sending the first response to client
+	DisableKeepalive bool // default false
+
+	// When set to true causes the default date header to be excluded from the response
+	DisableDefaultDate bool // default false
+
+	// When set to true, causes the default Content-Type header to be excluded from the Response
+	DisableDefaultContentType bool // default false
+
+	// By default all header names are normalized: conteNT-tYPE -> Content-Type
+	DisableHeaderNormalizing bool // default false
+
+	// The amount of time allowed to read the full request including body
+	ReadTimeout time.Duration // default unlimited
+
+	// The maximum duration before timing out writes of the response
+	WriteTimeout time.Duration // default unlimited
+
+	// The maximum amount of time to wait for the next request when keep-alive is enabled
+	IdleTimeout time.Duration // default unlimited
 }
 
 // Route struct which holds each route info
@@ -161,23 +207,29 @@ type Route struct {
 func New(settings ...*Settings) Gearbox {
 	gb := new(gearbox)
 	gb.registeredRoutes = make([]*Route, 0)
-	gb.httpServer = gb.newHTTPServer()
 
 	if len(settings) > 0 {
-		populateSettings(settings[0])
 		gb.settings = settings[0]
 	} else {
 		gb.settings = &Settings{}
 	}
 
-	return gb
-}
-
-// populateSettings sets default settings for settings that don't have values set
-func populateSettings(settings *Settings) {
-	if settings.CacheSize == 0 {
-		settings.CacheSize = cacheSizeDefault
+	// set default settings for settings that don't have values set
+	if gb.settings.CacheSize <= 0 {
+		gb.settings.CacheSize = defaultCacheSize
 	}
+
+	if gb.settings.MaxRequestBodySize <= 0 {
+		gb.settings.MaxRequestBodySize = defaultMaxRequestBodySize
+	}
+
+	if gb.settings.Concurrency <= 0 {
+		gb.settings.Concurrency = defaultConcurrency
+	}
+
+	gb.httpServer = gb.newHTTPServer()
+
+	return gb
 }
 
 // Start handling requests
@@ -211,9 +263,19 @@ func (dl *customLogger) Printf(format string, args ...interface{}) {
 // newHTTPServer returns a new instance of fasthttp server
 func (gb *gearbox) newHTTPServer() *fasthttp.Server {
 	return &fasthttp.Server{
-		Handler:      gb.handler,
-		Logger:       &customLogger{},
-		LogAllErrors: false,
+		Handler:                       gb.handler,
+		Logger:                        &customLogger{},
+		LogAllErrors:                  false,
+		Name:                          gb.settings.ServerName,
+		Concurrency:                   gb.settings.Concurrency,
+		NoDefaultDate:                 gb.settings.DisableDefaultDate,
+		NoDefaultContentType:          gb.settings.DisableDefaultContentType,
+		DisableHeaderNamesNormalizing: gb.settings.DisableHeaderNormalizing,
+		DisableKeepalive:              gb.settings.DisableKeepalive,
+		NoDefaultServerHeader:         gb.settings.ServerName == "",
+		ReadTimeout:                   gb.settings.ReadTimeout,
+		WriteTimeout:                  gb.settings.WriteTimeout,
+		IdleTimeout:                   gb.settings.IdleTimeout,
 	}
 }
 

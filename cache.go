@@ -29,6 +29,11 @@ type pair struct {
 
 // newCache returns LRU cache
 func newCache(capacity int) cache {
+	// minimum is 1
+	if capacity <= 0 {
+		capacity = 1
+	}
+
 	return &lruCache{
 		capacity: capacity,
 		list:     new(list.List),

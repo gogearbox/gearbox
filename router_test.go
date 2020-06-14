@@ -15,7 +15,7 @@ func setupGearbox(settings ...*Settings) *gearbox {
 		gb.settings = &Settings{}
 	}
 
-	gb.cache = newCache(cacheSizeDefault)
+	gb.cache = newCache(defaultCacheSize)
 	return gb
 }
 

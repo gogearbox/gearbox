@@ -399,10 +399,13 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersCha
 
 	trimmedPath := trimPath(path)
 
-	// Try to get from cache
-	cacheKey := append(method, trimmedPath...)
-	if cacheResult, ok := gb.cache.Get(cacheKey).(*matchParamsResult); ok {
-		return cacheResult.Handlers, cacheResult.Params
+	// Try to get from cache if it's enabled
+	cacheKey := ""
+	if !gb.settings.DisableCaching {
+		cacheKey := append(method, trimmedPath...)
+		if cacheResult, ok := gb.cache.Get(cacheKey).(*matchParamsResult); ok {
+			return cacheResult.Handlers, cacheResult.Params
+		}
 	}
 
 	paths := bytes.Split(trimmedPath, []byte("/"))
@@ -439,9 +442,11 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersCha
 	// Return longest prefix match
 	for i := lastMatchedNodesIndex - 1; i >= 0; i-- {
 		if lastMatchedNodes[i].Matched {
-			go func(key []byte, matchResult *matchParamsResult) {
-				gb.cache.Set(key, matchResult)
-			}(append(make([]byte, 0, len(cacheKey)), cacheKey...), lastMatchedNodes[i])
+			if !gb.settings.DisableCaching {
+				go func(key []byte, matchResult *matchParamsResult) {
+					gb.cache.Set(key, matchResult)
+				}(append(make([]byte, 0, len(cacheKey)), cacheKey...), lastMatchedNodes[i])
+			}
 
 			return lastMatchedNodes[i].Handlers, lastMatchedNodes[i].Params
 		}
