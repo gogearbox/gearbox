@@ -35,12 +35,6 @@ type endpoint struct {
 	Handlers handlersChain
 }
 
-type route struct {
-	Method   []byte
-	Path     []byte
-	Handlers handlersChain
-}
-
 type routerFallback struct {
 	Handlers handlersChain
 }
@@ -88,28 +82,28 @@ func validateRoutePath(path []byte) error {
 }
 
 // registerRoute registers handler with method and path
-func (gb *gearbox) registerRoute(method, path []byte, handlers handlersChain) error {
-	// Handler is not provided
-	if handlers == nil {
-		return fmt.Errorf("route %s with method %s does not contain any handlers", path, method)
-	}
-
-	// Check if path is valid or not
-	if err := validateRoutePath(path); err != nil {
-		return fmt.Errorf("route %s is not valid! - %s", path, err.Error())
-	}
+func (gb *gearbox) registerRoute(method, path []byte, handlers handlersChain) *Route {
 
 	if !gb.settings.CaseSensitive {
 		path = bytes.ToLower(path)
 	}
 
-	// Add route to registered routes
-	gb.registeredRoutes = append(gb.registeredRoutes, &route{
+	route := &Route{
 		Path:     path,
 		Method:   method,
 		Handlers: handlers,
-	})
-	return nil
+	}
+
+	// Add route to registered routes
+	gb.registeredRoutes = append(gb.registeredRoutes, route)
+	return route
+}
+
+func (gb *gearbox) Group(path string, routes []*Route) []*Route {
+	for _, route := range routes {
+		route.Path = append([]byte(path), route.Path...)
+	}
+	return routes
 }
 
 // registerFallback registers a single handler that will match only if all other routes fail to match
@@ -221,6 +215,17 @@ func (gb *gearbox) constructRoutingTree() error {
 
 	for _, route := range gb.registeredRoutes {
 		currentNode := gb.routingTreeRoot
+
+		// Handler is not provided
+		if route.Handlers == nil {
+			return fmt.Errorf("route %s with method %s does not contain any handlers", route.Path, route.Method)
+		}
+
+		// Check if path is valid or not
+		if err := validateRoutePath(route.Path); err != nil {
+			return fmt.Errorf("route %s is not valid! - %s", route.Path, err.Error())
+		}
+
 		params := make([]*param, 0)
 
 		// Split path into slices of parts

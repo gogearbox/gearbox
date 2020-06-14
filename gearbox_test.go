@@ -281,7 +281,7 @@ func TestStop(t *testing.T) {
 func TestRegisterFallback(t *testing.T) {
 	// get instance of gearbox
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*route, 0)
+	gb.registeredRoutes = make([]*Route, 0)
 	gb.settings = &Settings{}
 
 	// register valid route
@@ -335,7 +335,7 @@ func TestRegisterFallback(t *testing.T) {
 func Test_Use(t *testing.T) {
 	// get instance of gearbox
 	gb := new(gearbox)
-	gb.registeredRoutes = make([]*route, 0)
+	gb.registeredRoutes = make([]*Route, 0)
 	gb.settings = &Settings{}
 
 	// register valid route
