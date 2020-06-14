@@ -52,6 +52,10 @@ func (c *lruCache) Get(key []byte) interface{} {
 
 // Set adds a value to provided key in cache
 func (c *lruCache) Set(key []byte, value interface{}) {
+	if c.capacity == 0 {
+		return
+	}
+
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
