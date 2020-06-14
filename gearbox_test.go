@@ -38,7 +38,7 @@ func (c *fakeConn) Write(b []byte) (int, error) {
 
 // startGearbox constructs routing tree and creates server
 func startGearbox(gb *gearbox) {
-	gb.cache = newCache(cacheSizeDefault)
+	gb.cache = newCache(defaultCacheSize)
 	gb.constructRoutingTree()
 	gb.httpServer = &fasthttp.Server{
 		Handler:      gb.handler,
