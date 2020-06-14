@@ -12,8 +12,8 @@ import (
 
 // Exported constants
 const (
-	Version = "0.0.3-beta" // Version of gearbox
-	Name    = "Gearbox"    // Name of gearbox
+	Version = "1.0.0"   // Version of gearbox
+	Name    = "Gearbox" // Name of gearbox
 	// http://patorjk.com/software/taag/#p=display&f=Big%20Money-ne&t=Gearbox
 	banner = `
   /$$$$$$                                /$$                          
@@ -219,7 +219,7 @@ func New(settings ...*Settings) Gearbox {
 
 // populateSettings sets default settings for settings that don't have values set
 func populateSettings(settings *Settings) {
-	if settings.CacheSize == 0 {
+	if settings.CacheSize <= 0 {
 		settings.CacheSize = defaultCacheSize
 	}
 
