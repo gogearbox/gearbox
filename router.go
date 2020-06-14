@@ -25,9 +25,10 @@ const (
 )
 
 type param struct {
-	Name  []byte
-	Value string
-	Type  paramType
+	Name       []byte
+	Value      string
+	Type       paramType
+	IsOptional bool
 }
 
 type endpoint struct {
@@ -46,9 +47,9 @@ type routerFallback struct {
 }
 
 type matchParamsResult struct {
-	matched  bool
-	handlers handlersChain
-	params   tst
+	Matched  bool
+	Handlers handlersChain
+	Params   tst
 }
 
 // validateRoutePath makes sure that path complies with path's rules
@@ -65,21 +66,22 @@ func validateRoutePath(path []byte) error {
 	}
 
 	params := newTST()
-	parts := bytes.Split(path, []byte("/"))
+	parts := bytes.Split(trimPath(path), []byte("/"))
 	partsLen := len(parts)
-	for i := 1; i < partsLen; i++ {
+	for i := 0; i < partsLen; i++ {
 		if len(parts[i]) == 0 {
 			continue
 		}
-
 		if p := parseParameter(parts[i]); p != nil {
-			if p.Type == ptParam || p.Type == ptRegexp {
+			if p.Type == ptMatchAll && i != partsLen-1 {
+				return fmt.Errorf("* must be in the end of path")
+			} else if p.IsOptional && i != partsLen-1 {
+				return fmt.Errorf("only last parameter can be optional")
+			} else if p.Type == ptParam || p.Type == ptRegexp {
 				if pName := params.Get(p.Name); pName != nil {
 					return fmt.Errorf("parameter is duplicated")
 				}
 				params.Set(p.Name, true)
-			} else if p.Type == ptMatchAll && i != partsLen-1 {
-				return fmt.Errorf("* must be in the end of path")
 			}
 		}
 	}
@@ -135,7 +137,8 @@ func createEmptyRouteNode(name []byte) *routeNode {
 // parseParameter parses path part into param struct, or returns nil if it's
 // not a parameter
 func parseParameter(pathPart []byte) *param {
-	if len(pathPart) == 0 {
+	pathPartLen := len(pathPart)
+	if pathPartLen == 0 {
 		return nil
 	}
 
@@ -147,19 +150,26 @@ func parseParameter(pathPart []byte) *param {
 		}
 	}
 
+	isOptional := pathPart[pathPartLen-1] == '?'
+	if isOptional {
+		pathPart = pathPart[0 : pathPartLen-1]
+	}
+
 	params := bytes.Split(pathPart, []byte(":"))
 	paramsLen := len(params)
 
 	if paramsLen == 2 && len(params[0]) == 0 { // Just a parameter
 		return &param{
-			Name: params[1],
-			Type: ptParam,
+			Name:       params[1],
+			Type:       ptParam,
+			IsOptional: isOptional,
 		}
 	} else if paramsLen == 3 && len(params[0]) == 0 { // Regex parameter
 		return &param{
-			Name:  params[1],
-			Value: string(params[2]),
-			Type:  ptRegexp,
+			Name:       params[1],
+			Value:      string(params[2]),
+			Type:       ptRegexp,
+			IsOptional: isOptional,
 		}
 	}
 
@@ -305,6 +315,7 @@ func matchEndpointParams(ep *endpoint, paths [][]byte, pathIndex int) (tst, bool
 	endpointParamsLen := len(endpointParams)
 	pathsLen := len(paths)
 
+	//matched := false
 	paramIdx := 0
 	for paramIdx < endpointParamsLen {
 		if endpointParams[paramIdx].Type == ptMatchAll {
@@ -312,10 +323,17 @@ func matchEndpointParams(ep *endpoint, paths [][]byte, pathIndex int) (tst, bool
 			return paramDic, true
 		}
 
+		// path has ended and there is more parameters to match
 		if pathIndex >= pathsLen {
+			// If it's optional means this is the last parameter.
+			if endpointParams[paramIdx].IsOptional {
+				return paramDic, true
+			}
+
 			return nil, false
 		}
 
+		//
 		if len(paths[pathIndex]) == 0 {
 			pathIndex++
 			continue
@@ -326,7 +344,7 @@ func matchEndpointParams(ep *endpoint, paths [][]byte, pathIndex int) (tst, bool
 		} else if endpointParams[paramIdx].Type == ptRegexp {
 			if match, _ := regexp.Match(endpointParams[paramIdx].Value, paths[pathIndex]); match {
 				paramDic.Set(endpointParams[paramIdx].Name, paths[pathIndex])
-			} else {
+			} else if !endpointParams[paramIdx].IsOptional {
 				return nil, false
 			}
 		}
@@ -348,16 +366,16 @@ func matchNodeEndpoints(node *routeNode, method []byte, paths [][]byte,
 	if endpoints, ok := node.Endpoints.Get(method).([]*endpoint); ok {
 		for j := range endpoints {
 			if params, matched := matchEndpointParams(endpoints[j], paths, pathIndex); matched {
-				result.matched = true
-				result.params = params
-				result.handlers = endpoints[j].Handlers
+				result.Matched = true
+				result.Params = params
+				result.Handlers = endpoints[j].Handlers
 				wg.Done()
 				return
 			}
 		}
 	}
 
-	result.matched = false
+	result.Matched = false
 	wg.Done()
 }
 
@@ -379,7 +397,7 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersCha
 	// Try to get from cache
 	cacheKey := append(method, trimmedPath...)
 	if cacheResult, ok := gb.cache.Get(cacheKey).(*matchParamsResult); ok {
-		return cacheResult.handlers, cacheResult.params
+		return cacheResult.Handlers, cacheResult.Params
 	}
 
 	paths := bytes.Split(trimmedPath, []byte("/"))
@@ -415,12 +433,12 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersCha
 
 	// Return longest prefix match
 	for i := lastMatchedNodesIndex - 1; i >= 0; i-- {
-		if lastMatchedNodes[i].matched {
+		if lastMatchedNodes[i].Matched {
 			go func(key []byte, matchResult *matchParamsResult) {
 				gb.cache.Set(key, matchResult)
 			}(append(make([]byte, 0, len(cacheKey)), cacheKey...), lastMatchedNodes[i])
 
-			return lastMatchedNodes[i].handlers, lastMatchedNodes[i].params
+			return lastMatchedNodes[i].Handlers, lastMatchedNodes[i].Params
 		}
 	}
 
