@@ -105,14 +105,9 @@ func (gb *gearbox) registerRoute(method, path []byte, handlers handlersChain) *r
 	return route
 }
 
-func (gb *gearbox) route(path []byte, routes []*route) error {
-	// Check if path is valid or not
-	if err := validateRoutePath(path); err != nil {
-		return fmt.Errorf("route %s is not valid! - %s", path, err.Error())
-	}
-
+func (gb *gearbox) route(path string, routes []*route) error {
 	for _, route := range routes {
-		route.Path = append(path, route.Path...)
+		route.Path = append([]byte(path), route.Path...)
 	}
 	return nil
 }

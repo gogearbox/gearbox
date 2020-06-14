@@ -89,14 +89,15 @@ func TestRegisterRoute(t *testing.T) {
 		{method: []byte(MethodGet), path: []byte("/books/:name/:name"), handler: nil, isErr: true},
 	}
 
-	// create gearbox instance
-	gb := setupGearbox()
-
 	// counter for valid routes
 	validCounter := 0
 
 	for _, tt := range tests {
-		err := gb.registerRoute(tt.method, tt.path, tt.handler)
+		// create gearbox instance so old errors don't affect new routes
+		gb := setupGearbox()
+
+		gb.registerRoute(tt.method, tt.path, tt.handler)
+		err := gb.constructRoutingTree()
 		if (err != nil && !tt.isErr) || (err == nil && tt.isErr) {
 			errMsg := ""
 
@@ -112,12 +113,6 @@ func TestRegisterRoute(t *testing.T) {
 			validCounter++
 		}
 	}
-
-	// check valid counter is the same as count of registered routes
-	currentCount := len(gb.registeredRoutes)
-	if validCounter != currentCount {
-		t.Errorf("input %d find %d expecting %d", validCounter, currentCount, validCounter)
-	}
 }
 
 // TestRegisterInvalidRoute tests registering invalid routes
@@ -126,7 +121,9 @@ func TestRegisterInvalidRoute(t *testing.T) {
 	gb := setupGearbox()
 
 	// test handler is nil
-	if err := gb.registerRoute([]byte(MethodGet), []byte("invalid Path"), emptyHandlersChain); err == nil {
+	gb.registerRoute([]byte(MethodGet), []byte("invalid Path"), emptyHandlersChain)
+
+	if err := gb.constructRoutingTree(); err == nil {
 		t.Errorf("input GET invalid Path find nil expecting error")
 	}
 }
@@ -450,5 +447,18 @@ func TestInvalidFallback(t *testing.T) {
 	// attempt to register an invalid (nil) fallback handler
 	if err := gb.registerFallback(nil); err == nil {
 		t.Errorf("registering an invalid fallback did not return an error, expected error")
+	}
+}
+
+// TestInvalidFallback tests that a fallback cannot be registered
+// with a nil handler
+func TestGroupRouting(t *testing.T) {
+	// create gearbox instance
+	gb := setupGearbox()
+	routes := []*route{gb.Get("/id", emptyHandler), gb.Post("/abc", emptyHandler), gb.Post("/abcd", emptyHandler)}
+	gb.route("/account", routes)
+	// attempt to register an invalid (nil) fallback handler
+	if err := gb.constructRoutingTree(); err != nil {
+		t.Errorf("Grout routing failed, error: %v", err)
 	}
 }
