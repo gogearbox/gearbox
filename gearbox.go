@@ -207,21 +207,21 @@ func New(settings ...*Settings) Gearbox {
 
 	if len(settings) > 0 {
 		gb.settings = settings[0]
-
-		// set default settings for settings that don't have values set
-		if gb.settings.CacheSize <= 0 {
-			gb.settings.CacheSize = defaultCacheSize
-		}
-
-		if gb.settings.MaxRequestBodySize <= 0 {
-			gb.settings.MaxRequestBodySize = defaultMaxRequestBodySize
-		}
-
-		if gb.settings.Concurrency <= 0 {
-			gb.settings.Concurrency = defaultConcurrency
-		}
 	} else {
 		gb.settings = &Settings{}
+	}
+
+	// set default settings for settings that don't have values set
+	if gb.settings.CacheSize <= 0 {
+		gb.settings.CacheSize = defaultCacheSize
+	}
+
+	if gb.settings.MaxRequestBodySize <= 0 {
+		gb.settings.MaxRequestBodySize = defaultMaxRequestBodySize
+	}
+
+	if gb.settings.Concurrency <= 0 {
+		gb.settings.Concurrency = defaultConcurrency
 	}
 
 	gb.httpServer = gb.newHTTPServer()
