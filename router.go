@@ -419,7 +419,7 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersCha
 	go matchNodeEndpoints(currentNode, method, paths, 0, lastMatchedNodes[0], &wg)
 
 	for i := range paths {
-		if len(paths[i]) == 0 && i != 0 {
+		if len(paths[i]) == 0 {
 			continue
 		}
 
