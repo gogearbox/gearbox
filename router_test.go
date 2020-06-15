@@ -299,6 +299,7 @@ func TestConstructRoutingTree(t *testing.T) {
 		{method: []byte(MethodGet), path: []byte("/account/:name?"), handler: emptyHandlersChain},
 		{method: []byte(MethodGet), path: []byte("/profile/:name:([a-z]+)?"), handler: emptyHandlersChain},
 		{method: []byte(MethodGet), path: []byte("/order/:name1/:name2:([a-z]+)?"), handler: emptyHandlersChain},
+		{method: []byte(MethodGet), path: []byte("/"), handler: emptyHandlersChain},
 	}
 
 	// register routes
@@ -346,6 +347,7 @@ func TestConstructRoutingTree(t *testing.T) {
 		{method: []byte(MethodGet), path: []byte("/order/test1"), match: true, params: map[string]string{"name1": "test1"}},
 		{method: []byte(MethodGet), path: []byte("/order/test1/test2/"), match: true, params: map[string]string{"name1": "test1", "name2": "test2"}},
 		{method: []byte(MethodPut), path: []byte("/order/test1/test2/test3"), match: false, params: make(map[string]string)},
+		{method: []byte(MethodGet), path: []byte("/"), match: true, params: make(map[string]string)},
 	}
 
 	// test matching routes

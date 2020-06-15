@@ -320,7 +320,6 @@ func matchEndpointParams(ep *endpoint, paths [][]byte, pathIndex int) (tst, bool
 	endpointParamsLen := len(endpointParams)
 	pathsLen := len(paths)
 
-	//matched := false
 	paramIdx := 0
 	for paramIdx < endpointParamsLen {
 		if endpointParams[paramIdx].Type == ptMatchAll {
@@ -338,7 +337,6 @@ func matchEndpointParams(ep *endpoint, paths [][]byte, pathIndex int) (tst, bool
 			return nil, false
 		}
 
-		//
 		if len(paths[pathIndex]) == 0 {
 			pathIndex++
 			continue
@@ -355,6 +353,10 @@ func matchEndpointParams(ep *endpoint, paths [][]byte, pathIndex int) (tst, bool
 		}
 
 		paramIdx++
+		pathIndex++
+	}
+
+	for pathIndex < pathsLen && len(paths[pathIndex]) == 0 {
 		pathIndex++
 	}
 
@@ -417,7 +419,7 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersCha
 	go matchNodeEndpoints(currentNode, method, paths, 0, lastMatchedNodes[0], &wg)
 
 	for i := range paths {
-		if len(paths[i]) == 0 {
+		if len(paths[i]) == 0 && i != 0 {
 			continue
 		}
 
