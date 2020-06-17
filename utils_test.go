@@ -5,17 +5,17 @@ import "fmt"
 // ExampleGetString tests converting []byte to string
 func ExampleGetString() {
 	b := []byte("ABC€")
-	str := getString(b)
+	str := GetString(b)
 	fmt.Println(str)
 	fmt.Println(len(b) == len(str))
 
 	b = []byte("مستخدم")
-	str = getString(b)
+	str = GetString(b)
 	fmt.Println(str)
 	fmt.Println(len(b) == len(str))
 
 	b = nil
-	str = getString(b)
+	str = GetString(b)
 	fmt.Println(str)
 	fmt.Println(len(b) == len(str))
 	fmt.Println(len(str))

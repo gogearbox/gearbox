@@ -239,7 +239,7 @@ func (gb *gearbox) Start(address string) error {
 		return fmt.Errorf("unable to construct routing %s", err.Error())
 	}
 
-	gb.cache = newCache(gb.settings.CacheSize)
+	gb.cache = NewCache(gb.settings.CacheSize)
 
 	ln, err := net.Listen("tcp4", address)
 	if err != nil {
@@ -359,8 +359,8 @@ func (gb *gearbox) Use(middlewares ...handlerFunc) {
 // method and path
 func (gb *gearbox) handler(ctx *fasthttp.RequestCtx) {
 	if handlers, params := gb.matchRoute(
-		getString(ctx.Request.Header.Method()),
-		getString(ctx.URI().Path())); handlers != nil {
+		GetString(ctx.Request.Header.Method()),
+		GetString(ctx.URI().Path())); handlers != nil {
 		context := Context{
 			RequestCtx: ctx,
 			Params:     params,

@@ -27,8 +27,8 @@ type pair struct {
 	value interface{}
 }
 
-// newCache returns LRU cache
-func newCache(capacity int) cache {
+// NewCache returns LRU cache
+func NewCache(capacity int) cache {
 	// minimum is 1
 	if capacity <= 0 {
 		capacity = 1

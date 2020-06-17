@@ -4,9 +4,9 @@ import (
 	"fmt"
 )
 
-// ExampleCache tests Cache set and get methods
-func ExampleCache() {
-	cache := newCache(3)
+// ExampleNewCache tests Cache set and get methods
+func ExampleNewCache() {
+	cache := NewCache(3)
 	cache.Set("user1", 1)
 	fmt.Println(cache.Get("user1").(int))
 
@@ -26,7 +26,7 @@ func ExampleCache() {
 	cache.Set("user5", 6)
 	fmt.Println(cache.Get("user5").(int))
 
-	cache2 := newCache(0)
+	cache2 := NewCache(0)
 	cache2.Set("user1", 1)
 	fmt.Println(cache2.Get("user1").(int))
 
