@@ -7,8 +7,8 @@ import (
 
 // Implementation of LRU caching using doubly linked list and tst
 
-// cache returns LRU cache
-type cache interface {
+// Cache returns LRU cache
+type Cache interface {
 	Set(key string, value interface{})
 	Get(key string) interface{}
 }
@@ -28,7 +28,7 @@ type pair struct {
 }
 
 // NewCache returns LRU cache
-func NewCache(capacity int) cache {
+func NewCache(capacity int) Cache {
 	// minimum is 1
 	if capacity <= 0 {
 		capacity = 1

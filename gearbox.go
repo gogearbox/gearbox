@@ -147,7 +147,7 @@ type gearbox struct {
 	address            string // server address
 	handlers           handlersChain
 	registeredFallback *routerFallback
-	cache              cache
+	cache              Cache
 	settings           *Settings
 }
 
