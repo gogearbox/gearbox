@@ -59,7 +59,7 @@ func validateRoutePath(path string) error {
 		return fmt.Errorf("path must start with /")
 	}
 
-	params := make(map[string]bool, 0)
+	params := make(map[string]bool)
 	parts := strings.Split(trimPath(path), "/")
 	partsLen := len(parts)
 	for i := 0; i < partsLen; i++ {
@@ -123,8 +123,8 @@ func (gb *gearbox) registerFallback(handlers handlersChain) error {
 func createEmptyRouteNode(name string) *routeNode {
 	return &routeNode{
 		Name:      name,
-		Children:  make(map[string]*routeNode, 0),
-		Endpoints: make(map[string][]*endpoint, 0),
+		Children:  make(map[string]*routeNode),
+		Endpoints: make(map[string][]*endpoint),
 	}
 }
 
@@ -307,7 +307,7 @@ func (gb *gearbox) matchRoute(method, path string) (handlersChain, map[string]st
 	}
 
 	if gb.registeredFallback != nil && gb.registeredFallback.Handlers != nil {
-		return gb.registeredFallback.Handlers, make(map[string]string, 0)
+		return gb.registeredFallback.Handlers, make(map[string]string)
 	}
 
 	return nil, nil
