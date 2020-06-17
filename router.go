@@ -63,7 +63,7 @@ func validateRoutePath(path string) error {
 	parts := strings.Split(trimPath(path), "/")
 	partsLen := len(parts)
 	for i := 0; i < partsLen; i++ {
-		if len(parts[i]) == 0 {
+		if parts[i] == "" {
 			continue
 		}
 		if p := parseParameter(parts[i]); p != nil {
@@ -152,13 +152,13 @@ func parseParameter(pathPart string) *param {
 	params := strings.Split(pathPart, ":")
 	paramsLen := len(params)
 
-	if paramsLen == 2 && len(params[0]) == 0 { // Just a parameter
+	if paramsLen == 2 && params[0] == "" { // Just a parameter
 		return &param{
 			Name:       params[1],
 			Type:       ptParam,
 			IsOptional: isOptional,
 		}
-	} else if paramsLen == 3 && len(params[0]) == 0 { // Regex parameter
+	} else if paramsLen == 3 && params[0] == "" { // Regex parameter
 		return &param{
 			Name:       params[1],
 			Value:      string(params[2]),
@@ -246,7 +246,7 @@ func (gb *gearbox) constructRoutingTree() error {
 			part := parts[i]
 
 			// Do not create node if part is empty
-			if len(part) == 0 {
+			if part == "" {
 				continue
 			}
 
@@ -336,7 +336,7 @@ func matchEndpointParams(ep *endpoint, paths []string, pathIndex int) (map[strin
 			return nil, false
 		}
 
-		if len(paths[pathIndex]) == 0 {
+		if paths[pathIndex] == "" {
 			pathIndex++
 			continue
 		}
@@ -355,7 +355,7 @@ func matchEndpointParams(ep *endpoint, paths []string, pathIndex int) (map[strin
 		pathIndex++
 	}
 
-	for pathIndex < pathsLen && len(paths[pathIndex]) == 0 {
+	for pathIndex < pathsLen && paths[pathIndex] == "" {
 		pathIndex++
 	}
 
@@ -390,7 +390,7 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path string) (handlersCha
 	currentNode := gb.routingTreeRoot
 
 	// Return if root is empty, or path is not valid
-	if currentNode == nil || len(path) == 0 || path[0] != '/' {
+	if currentNode == nil || path == "" || path[0] != '/' {
 		return nil, nil
 	}
 
@@ -418,7 +418,7 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path string) (handlersCha
 	go matchNodeEndpoints(currentNode, method, paths, 0, lastMatchedNodes[0], &wg)
 
 	for i := range paths {
-		if len(paths[i]) == 0 {
+		if paths[i] == "" {
 			continue
 		}
 
