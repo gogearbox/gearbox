@@ -46,10 +46,8 @@ func (c *lruCache) Get(key string) interface{} {
 	if node, ok := c.store.Load(key); ok {
 		nnode := node.(*list.Element)
 		c.mutex.RLock()
-		go func(n *list.Element) {
-			c.list.MoveToFront(nnode)
-			c.mutex.RUnlock()
-		}(nnode)
+		c.list.MoveToFront(nnode)
+		c.mutex.RUnlock()
 
 		return nnode.Value.(*pair).value
 	}
