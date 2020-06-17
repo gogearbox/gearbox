@@ -81,17 +81,17 @@ func main() {
 
 	// Handler with parameter
 	gb.Get("/users/:user", func(ctx *gearbox.Context) {
-		fmt.Printf("%s\n", ctx.Params.GetString("user"))
+		fmt.Printf("%s\n", ctx.Params["user"])
 	})
 
 	// Handler with optional parameter
 	gb.Get("/search/:pattern?", func(ctx *gearbox.Context) {
-		fmt.Printf("%s\n", ctx.Params.GetString("pattern"))
+		fmt.Printf("%s\n", ctx.Params["pattern"])
 	})
 
 	// Handler with regex parameter
 	gb.Get("/book/:name:([a-z]+[0-3])", func(ctx *gearbox.Context) {
-		fmt.Printf("%s\n", ctx.Params.GetString("name"))
+		fmt.Printf("%s\n", ctx.Params["name"])
 	})
 
 	// Start service

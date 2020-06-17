@@ -9,21 +9,21 @@ import (
 
 // cache returns LRU cache
 type cache interface {
-	Set(key []byte, value interface{})
-	Get(key []byte) interface{}
+	Set(key string, value interface{})
+	Get(key string) interface{}
 }
 
 // lruCache holds info used for caching internally
 type lruCache struct {
 	capacity int
 	list     *list.List
-	store    tst
+	store    sync.Map
 	mutex    sync.RWMutex
 }
 
 // pair contains key and value of element
 type pair struct {
-	key   []byte
+	key   string
 	value interface{}
 }
 
@@ -37,33 +37,36 @@ func newCache(capacity int) cache {
 	return &lruCache{
 		capacity: capacity,
 		list:     new(list.List),
-		store:    newTST(),
 	}
 }
 
 // Get returns value of provided key if it's existing
-func (c *lruCache) Get(key []byte) interface{} {
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
-
+func (c *lruCache) Get(key string) interface{} {
 	// check if list node exists
-	if node, ok := c.store.Get(key).(*list.Element); ok {
-		c.list.MoveToFront(node)
+	if node, ok := c.store.Load(key); ok {
+		nnode := node.(*list.Element)
+		c.mutex.RLock()
+		go func(n *list.Element) {
+			c.list.MoveToFront(nnode)
+			c.mutex.RUnlock()
+		}(nnode)
 
-		return node.Value.(*pair).value
+		return nnode.Value.(*pair).value
 	}
 	return nil
 }
 
 // Set adds a value to provided key in cache
-func (c *lruCache) Set(key []byte, value interface{}) {
+func (c *lruCache) Set(key string, value interface{}) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
 	// update the value if key is existing
-	if node, ok := c.store.Get(key).(*list.Element); ok {
-		c.list.MoveToFront(node)
-		node.Value.(*pair).value = value
+	if node, ok := c.store.Load(key); ok {
+		nnode := node.(*list.Element)
+		c.list.MoveToFront(nnode)
+
+		nnode.Value.(*pair).value = value
 
 		return
 	}
@@ -73,14 +76,13 @@ func (c *lruCache) Set(key []byte, value interface{}) {
 		lastKey := c.list.Back().Value.(*pair).key
 
 		// delete key's value
-		c.store.Set(lastKey, nil)
+		c.store.Delete(lastKey)
 
 		c.list.Remove(c.list.Back())
 	}
 
-	newValue := &pair{
+	c.store.Store(key, c.list.PushFront(&pair{
 		key:   key,
 		value: value,
-	}
-	c.store.Set(key, c.list.PushFront(newValue))
+	}))
 }
