@@ -17,7 +17,7 @@ type cache interface {
 type lruCache struct {
 	capacity int
 	list     *list.List
-	store    sync.Map
+	store    map[string]interface{}
 	mutex    sync.RWMutex
 }
 
@@ -37,6 +37,7 @@ func newCache(capacity int) cache {
 	return &lruCache{
 		capacity: capacity,
 		list:     new(list.List),
+		store:    make(map[string]interface{}),
 	}
 }
 
@@ -46,7 +47,7 @@ func (c *lruCache) Get(key string) interface{} {
 	defer c.mutex.RUnlock()
 
 	// check if list node exists
-	if node, ok := c.store.Load(key); ok {
+	if node, ok := c.store[key]; ok {
 		nnode := node.(*list.Element)
 		c.list.MoveToFront(nnode)
 
@@ -61,7 +62,7 @@ func (c *lruCache) Set(key string, value interface{}) {
 	defer c.mutex.Unlock()
 
 	// update the value if key is existing
-	if node, ok := c.store.Load(key); ok {
+	if node, ok := c.store[key]; ok {
 		nnode := node.(*list.Element)
 		c.list.MoveToFront(nnode)
 
@@ -75,13 +76,13 @@ func (c *lruCache) Set(key string, value interface{}) {
 		lastKey := c.list.Back().Value.(*pair).key
 
 		// delete key's value
-		c.store.Delete(lastKey)
+		delete(c.store, lastKey)
 
 		c.list.Remove(c.list.Back())
 	}
 
-	c.store.Store(key, c.list.PushFront(&pair{
+	c.store[key] = c.list.PushFront(&pair{
 		key:   key,
 		value: value,
-	}))
+	})
 }
