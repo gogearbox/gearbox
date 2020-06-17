@@ -47,11 +47,10 @@ func (c *lruCache) Get(key string) interface{} {
 	defer c.mutex.RUnlock()
 
 	// check if list node exists
-	if node, ok := c.store[key]; ok {
-		nnode := node.(*list.Element)
-		c.list.MoveToFront(nnode)
+	if node, ok := c.store[key].(*list.Element); ok {
+		c.list.MoveToFront(node)
 
-		return nnode.Value.(*pair).value
+		return node.Value.(*pair).value
 	}
 	return nil
 }
@@ -62,23 +61,21 @@ func (c *lruCache) Set(key string, value interface{}) {
 	defer c.mutex.Unlock()
 
 	// update the value if key is existing
-	if node, ok := c.store[key]; ok {
-		nnode := node.(*list.Element)
-		c.list.MoveToFront(nnode)
+	if node, ok := c.store[key].(*list.Element); ok {
+		c.list.MoveToFront(node)
 
-		nnode.Value.(*pair).value = value
-
+		node.Value.(*pair).value = value
 		return
 	}
 
 	// remove last node if cache is full
 	if c.list.Len() == c.capacity {
-		lastKey := c.list.Back().Value.(*pair).key
+		lastNode := c.list.Back()
 
 		// delete key's value
-		delete(c.store, lastKey)
+		delete(c.store, lastNode.Value.(*pair).key)
 
-		c.list.Remove(c.list.Back())
+		c.list.Remove(lastNode)
 	}
 
 	c.store[key] = c.list.PushFront(&pair{
