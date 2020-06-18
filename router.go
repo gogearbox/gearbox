@@ -101,13 +101,6 @@ func (gb *gearbox) registerRoute(method, path string, handlers handlersChain) *R
 	return route
 }
 
-func (gb *gearbox) Group(path string, routes []*Route) []*Route {
-	for _, route := range routes {
-		route.Path = path + route.Path
-	}
-	return routes
-}
-
 // registerFallback registers a single handler that will match only if all other routes fail to match
 func (gb *gearbox) registerFallback(handlers handlersChain) error {
 	// Handler is not provided

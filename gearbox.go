@@ -136,7 +136,7 @@ type Gearbox interface {
 	Method(method, path string, handlers ...handlerFunc) *Route
 	Fallback(handlers ...handlerFunc) error
 	Use(middlewares ...handlerFunc)
-	Group(path string, routes []*Route) []*Route
+	Group(prefix string, routes []*Route) []*Route
 }
 
 // gearbox implements Gearbox interface
@@ -353,6 +353,14 @@ func (gb *gearbox) Fallback(handlers ...handlerFunc) error {
 // For example, this is the right place for a logger or some security check or permission checking.
 func (gb *gearbox) Use(middlewares ...handlerFunc) {
 	gb.handlers = append(gb.handlers, middlewares...)
+}
+
+// Group appends a prefix to registered routes.
+func (gb *gearbox) Group(prefix string, routes []*Route) []*Route {
+	for _, route := range routes {
+		route.Path = prefix + route.Path
+	}
+	return routes
 }
 
 // Handles all incoming requests and route them to proper handler according to

@@ -132,18 +132,21 @@ func main() {
 		ctx.RequestCtx.Response.SetBodyString("Hello World!")
 	})
     
-    // Register the routes to be used when grouping routes
-    routes := []*gearbox.Route{gb.Get("/id", func(ctx *gearbox.Context) {
-        ctx.RequestCtx.Response.SetBodyString("User X")
-    }), gb.Delete("/id", func(ctx *gearbox.Context) {
-        ctx.RequestCtx.Response.SetBodyString("Deleted")
-    })}
-    
-    // Group account routes
-    accountRoutes := gb.Group("/account", routes)
-    
-    // Group account routes to be under api
-    gb.Group("/api", accountRoutes)
+	// Register the routes to be used when grouping routes
+	routes := []*gearbox.Route {
+		gb.Get("/id", func(ctx *gearbox.Context) {
+			ctx.RequestCtx.Response.SetBodyString("User X")
+		}),
+		gb.Delete("/id", func(ctx *gearbox.Context) {
+			ctx.RequestCtx.Response.SetBodyString("Deleted")
+		})
+	}
+
+	// Group account routes
+	accountRoutes := gb.Group("/account", routes)
+
+	// Group account routes to be under api
+	gb.Group("/api", accountRoutes)
 
 	// Define a route with unAuthorizedMiddleware as the middleware
 	// you can define as many middlewares as you want and have the handler as the last argument
