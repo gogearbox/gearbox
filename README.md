@@ -81,17 +81,17 @@ func main() {
 
 	// Handler with parameter
 	gb.Get("/users/:user", func(ctx *gearbox.Context) {
-		fmt.Printf("%s\n", ctx.Params.GetString("user"))
+		fmt.Printf("%s\n", ctx.Params["user"])
 	})
 
 	// Handler with optional parameter
 	gb.Get("/search/:pattern?", func(ctx *gearbox.Context) {
-		fmt.Printf("%s\n", ctx.Params.GetString("pattern"))
+		fmt.Printf("%s\n", ctx.Params["pattern"])
 	})
 
 	// Handler with regex parameter
 	gb.Get("/book/:name:([a-z]+[0-3])", func(ctx *gearbox.Context) {
-		fmt.Printf("%s\n", ctx.Params.GetString("name"))
+		fmt.Printf("%s\n", ctx.Params["name"])
 	})
 
 	// Start service
@@ -132,18 +132,21 @@ func main() {
 		ctx.RequestCtx.Response.SetBodyString("Hello World!")
 	})
     
-    // Register the routes to be used when grouping routes
-    routes := []*gearbox.Route{gb.Get("/id", func(ctx *gearbox.Context) {
-        ctx.RequestCtx.Response.SetBodyString("User X")
-    }), gb.Delete("/id", func(ctx *gearbox.Context) {
-        ctx.RequestCtx.Response.SetBodyString("Deleted")
-    })}
-    
-    // Group account routes
-    accountRoutes := gb.Group("/account", routes)
-    
-    // Group account routes to be under api
-    gb.Group("/api", accountRoutes)
+	// Register the routes to be used when grouping routes
+	routes := []*gearbox.Route {
+		gb.Get("/id", func(ctx *gearbox.Context) {
+			ctx.RequestCtx.Response.SetBodyString("User X")
+		}),
+		gb.Delete("/id", func(ctx *gearbox.Context) {
+			ctx.RequestCtx.Response.SetBodyString("Deleted")
+		})
+	}
+
+	// Group account routes
+	accountRoutes := gb.Group("/account", routes)
+
+	// Group account routes to be under api
+	gb.Group("/api", accountRoutes)
 
 	// Define a route with unAuthorizedMiddleware as the middleware
 	// you can define as many middlewares as you want and have the handler as the last argument

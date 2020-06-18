@@ -7,28 +7,28 @@ import (
 
 // Implementation of LRU caching using doubly linked list and tst
 
-// cache returns LRU cache
-type cache interface {
-	Set(key []byte, value interface{})
-	Get(key []byte) interface{}
+// Cache returns LRU cache
+type Cache interface {
+	Set(key string, value interface{})
+	Get(key string) interface{}
 }
 
 // lruCache holds info used for caching internally
 type lruCache struct {
 	capacity int
 	list     *list.List
-	store    tst
+	store    map[string]interface{}
 	mutex    sync.RWMutex
 }
 
 // pair contains key and value of element
 type pair struct {
-	key   []byte
+	key   string
 	value interface{}
 }
 
-// newCache returns LRU cache
-func newCache(capacity int) cache {
+// NewCache returns LRU cache
+func NewCache(capacity int) Cache {
 	// minimum is 1
 	if capacity <= 0 {
 		capacity = 1
@@ -37,17 +37,17 @@ func newCache(capacity int) cache {
 	return &lruCache{
 		capacity: capacity,
 		list:     new(list.List),
-		store:    newTST(),
+		store:    make(map[string]interface{}),
 	}
 }
 
 // Get returns value of provided key if it's existing
-func (c *lruCache) Get(key []byte) interface{} {
+func (c *lruCache) Get(key string) interface{} {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
 	// check if list node exists
-	if node, ok := c.store.Get(key).(*list.Element); ok {
+	if node, ok := c.store[key].(*list.Element); ok {
 		c.list.MoveToFront(node)
 
 		return node.Value.(*pair).value
@@ -56,31 +56,30 @@ func (c *lruCache) Get(key []byte) interface{} {
 }
 
 // Set adds a value to provided key in cache
-func (c *lruCache) Set(key []byte, value interface{}) {
+func (c *lruCache) Set(key string, value interface{}) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
 	// update the value if key is existing
-	if node, ok := c.store.Get(key).(*list.Element); ok {
+	if node, ok := c.store[key].(*list.Element); ok {
 		c.list.MoveToFront(node)
-		node.Value.(*pair).value = value
 
+		node.Value.(*pair).value = value
 		return
 	}
 
 	// remove last node if cache is full
 	if c.list.Len() == c.capacity {
-		lastKey := c.list.Back().Value.(*pair).key
+		lastNode := c.list.Back()
 
 		// delete key's value
-		c.store.Set(lastKey, nil)
+		delete(c.store, lastNode.Value.(*pair).key)
 
-		c.list.Remove(c.list.Back())
+		c.list.Remove(lastNode)
 	}
 
-	newValue := &pair{
+	c.store[key] = c.list.PushFront(&pair{
 		key:   key,
 		value: value,
-	}
-	c.store.Set(key, c.list.PushFront(newValue))
+	})
 }

@@ -40,13 +40,13 @@ jobs:
 
     - name: Install dependencies
       run: go get -v golang.org/x/lint/golint
-    
+
     - name: Build
       run: go build
     
     - name: Lint
       run: golint -set_exit_status ./...
-    
+
     - name: Test
       run: go test -race --coverprofile=coverage.txt --covermode=atomic ./...
 

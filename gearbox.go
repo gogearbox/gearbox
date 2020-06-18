@@ -12,7 +12,7 @@ import (
 
 // Exported constants
 const (
-	Version = "1.0.1"   // Version of gearbox
+	Version = "1.0.2"   // Version of gearbox
 	Name    = "Gearbox" // Name of gearbox
 	// http://patorjk.com/software/taag/#p=display&f=Big%20Money-ne&t=Gearbox
 	banner = `
@@ -136,7 +136,7 @@ type Gearbox interface {
 	Method(method, path string, handlers ...handlerFunc) *Route
 	Fallback(handlers ...handlerFunc) error
 	Use(middlewares ...handlerFunc)
-	Group(path string, routes []*Route) []*Route
+	Group(prefix string, routes []*Route) []*Route
 }
 
 // gearbox implements Gearbox interface
@@ -147,14 +147,14 @@ type gearbox struct {
 	address            string // server address
 	handlers           handlersChain
 	registeredFallback *routerFallback
-	cache              cache
+	cache              Cache
 	settings           *Settings
 }
 
 // Settings struct holds server settings
 type Settings struct {
 	// Enable case sensitive routing
-	CaseSensitive bool // default false
+	CaseInSensitive bool // default false
 
 	// Maximum size of LRU cache that will be used in routing if it's enabled
 	CacheSize int // default 1000
@@ -198,8 +198,8 @@ type Settings struct {
 
 // Route struct which holds each route info
 type Route struct {
-	Method   []byte
-	Path     []byte
+	Method   string
+	Path     string
 	Handlers handlersChain
 }
 
@@ -239,7 +239,7 @@ func (gb *gearbox) Start(address string) error {
 		return fmt.Errorf("unable to construct routing %s", err.Error())
 	}
 
-	gb.cache = newCache(gb.settings.CacheSize)
+	gb.cache = NewCache(gb.settings.CacheSize)
 
 	ln, err := net.Listen("tcp4", address)
 	if err != nil {
@@ -294,52 +294,52 @@ func (gb *gearbox) Stop() error {
 
 // Get registers an http relevant method
 func (gb *gearbox) Get(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute([]byte(MethodGet), []byte(path), handlers)
+	return gb.registerRoute(string(MethodGet), string(path), handlers)
 }
 
 // Head registers an http relevant method
 func (gb *gearbox) Head(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute([]byte(MethodHead), []byte(path), handlers)
+	return gb.registerRoute(string(MethodHead), string(path), handlers)
 }
 
 // Post registers an http relevant method
 func (gb *gearbox) Post(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute([]byte(MethodPost), []byte(path), handlers)
+	return gb.registerRoute(string(MethodPost), string(path), handlers)
 }
 
 // Put registers an http relevant method
 func (gb *gearbox) Put(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute([]byte(MethodPut), []byte(path), handlers)
+	return gb.registerRoute(string(MethodPut), string(path), handlers)
 }
 
 // Patch registers an http relevant method
 func (gb *gearbox) Patch(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute([]byte(MethodPatch), []byte(path), handlers)
+	return gb.registerRoute(string(MethodPatch), string(path), handlers)
 }
 
 // Delete registers an http relevant method
 func (gb *gearbox) Delete(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute([]byte(MethodDelete), []byte(path), handlers)
+	return gb.registerRoute(string(MethodDelete), string(path), handlers)
 }
 
 // Connect registers an http relevant method
 func (gb *gearbox) Connect(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute([]byte(MethodConnect), []byte(path), handlers)
+	return gb.registerRoute(string(MethodConnect), string(path), handlers)
 }
 
 // Options registers an http relevant method
 func (gb *gearbox) Options(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute([]byte(MethodOptions), []byte(path), handlers)
+	return gb.registerRoute(string(MethodOptions), string(path), handlers)
 }
 
 // Trace registers an http relevant method
 func (gb *gearbox) Trace(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute([]byte(MethodTrace), []byte(path), handlers)
+	return gb.registerRoute(string(MethodTrace), string(path), handlers)
 }
 
 // Trace registers an http relevant method
 func (gb *gearbox) Method(method, path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute([]byte(method), []byte(path), handlers)
+	return gb.registerRoute(string(method), string(path), handlers)
 }
 
 // Fallback registers an http handler only fired when no other routes match with request
@@ -355,10 +355,20 @@ func (gb *gearbox) Use(middlewares ...handlerFunc) {
 	gb.handlers = append(gb.handlers, middlewares...)
 }
 
+// Group appends a prefix to registered routes.
+func (gb *gearbox) Group(prefix string, routes []*Route) []*Route {
+	for _, route := range routes {
+		route.Path = prefix + route.Path
+	}
+	return routes
+}
+
 // Handles all incoming requests and route them to proper handler according to
 // method and path
 func (gb *gearbox) handler(ctx *fasthttp.RequestCtx) {
-	if handlers, params := gb.matchRoute(ctx.Request.Header.Method(), ctx.URI().Path()); handlers != nil {
+	if handlers, params := gb.matchRoute(
+		GetString(ctx.Request.Header.Method()),
+		GetString(ctx.URI().Path())); handlers != nil {
 		context := Context{
 			RequestCtx: ctx,
 			Params:     params,

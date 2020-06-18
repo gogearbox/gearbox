@@ -1,17 +1,17 @@
 package gearbox
 
 import (
-	"bytes"
 	"fmt"
 	"regexp"
 	"sort"
+	"strings"
 	"sync"
 )
 
 type routeNode struct {
-	Name      []byte
-	Endpoints tst
-	Children  tst
+	Name      string
+	Endpoints map[string][]*endpoint
+	Children  map[string]*routeNode
 }
 
 type paramType uint8
@@ -25,7 +25,7 @@ const (
 )
 
 type param struct {
-	Name       []byte
+	Name       string
 	Value      string
 	Type       paramType
 	IsOptional bool
@@ -43,11 +43,11 @@ type routerFallback struct {
 type matchParamsResult struct {
 	Matched  bool
 	Handlers handlersChain
-	Params   tst
+	Params   map[string]string
 }
 
 // validateRoutePath makes sure that path complies with path's rules
-func validateRoutePath(path []byte) error {
+func validateRoutePath(path string) error {
 	// Check length of the path
 	length := len(path)
 	if length == 0 {
@@ -59,11 +59,11 @@ func validateRoutePath(path []byte) error {
 		return fmt.Errorf("path must start with /")
 	}
 
-	params := newTST()
-	parts := bytes.Split(trimPath(path), []byte("/"))
+	params := make(map[string]bool)
+	parts := strings.Split(trimPath(path), "/")
 	partsLen := len(parts)
 	for i := 0; i < partsLen; i++ {
-		if len(parts[i]) == 0 {
+		if parts[i] == "" {
 			continue
 		}
 		if p := parseParameter(parts[i]); p != nil {
@@ -72,10 +72,10 @@ func validateRoutePath(path []byte) error {
 			} else if p.IsOptional && i != partsLen-1 {
 				return fmt.Errorf("only last parameter can be optional")
 			} else if p.Type == ptParam || p.Type == ptRegexp {
-				if pName := params.Get(p.Name); pName != nil {
+				if _, ok := params[p.Name]; ok {
 					return fmt.Errorf("parameter is duplicated")
 				}
-				params.Set(p.Name, true)
+				params[p.Name] = true
 			}
 		}
 	}
@@ -84,10 +84,10 @@ func validateRoutePath(path []byte) error {
 }
 
 // registerRoute registers handler with method and path
-func (gb *gearbox) registerRoute(method, path []byte, handlers handlersChain) *Route {
+func (gb *gearbox) registerRoute(method, path string, handlers handlersChain) *Route {
 
-	if !gb.settings.CaseSensitive {
-		path = bytes.ToLower(path)
+	if gb.settings.CaseInSensitive {
+		path = strings.ToLower(path)
 	}
 
 	route := &Route{
@@ -99,13 +99,6 @@ func (gb *gearbox) registerRoute(method, path []byte, handlers handlersChain) *R
 	// Add route to registered routes
 	gb.registeredRoutes = append(gb.registeredRoutes, route)
 	return route
-}
-
-func (gb *gearbox) Group(path string, routes []*Route) []*Route {
-	for _, route := range routes {
-		route.Path = append([]byte(path), route.Path...)
-	}
-	return routes
 }
 
 // registerFallback registers a single handler that will match only if all other routes fail to match
@@ -120,17 +113,17 @@ func (gb *gearbox) registerFallback(handlers handlersChain) error {
 }
 
 // createEmptyRouteNode creates a new route node with name
-func createEmptyRouteNode(name []byte) *routeNode {
+func createEmptyRouteNode(name string) *routeNode {
 	return &routeNode{
 		Name:      name,
-		Children:  newTST(),
-		Endpoints: newTST(),
+		Children:  make(map[string]*routeNode),
+		Endpoints: make(map[string][]*endpoint),
 	}
 }
 
 // parseParameter parses path part into param struct, or returns nil if it's
 // not a parameter
-func parseParameter(pathPart []byte) *param {
+func parseParameter(pathPart string) *param {
 	pathPartLen := len(pathPart)
 	if pathPartLen == 0 {
 		return nil
@@ -139,7 +132,7 @@ func parseParameter(pathPart []byte) *param {
 	// match all
 	if pathPart[0] == '*' {
 		return &param{
-			Name: []byte("*"),
+			Name: "*",
 			Type: ptMatchAll,
 		}
 	}
@@ -149,16 +142,16 @@ func parseParameter(pathPart []byte) *param {
 		pathPart = pathPart[0 : pathPartLen-1]
 	}
 
-	params := bytes.Split(pathPart, []byte(":"))
+	params := strings.Split(pathPart, ":")
 	paramsLen := len(params)
 
-	if paramsLen == 2 && len(params[0]) == 0 { // Just a parameter
+	if paramsLen == 2 && params[0] == "" { // Just a parameter
 		return &param{
 			Name:       params[1],
 			Type:       ptParam,
 			IsOptional: isOptional,
 		}
-	} else if paramsLen == 3 && len(params[0]) == 0 { // Regex parameter
+	} else if paramsLen == 3 && params[0] == "" { // Regex parameter
 		return &param{
 			Name:       params[1],
 			Value:      string(params[2]),
@@ -203,7 +196,7 @@ func isValidEndpoint(endpoints []*endpoint, newEndpoint *endpoint) bool {
 }
 
 // trimPath trims left and right slashes in path
-func trimPath(path []byte) []byte {
+func trimPath(path string) string {
 	pathLastIndex := len(path) - 1
 
 	for path[pathLastIndex] == '/' && pathLastIndex > 0 {
@@ -221,7 +214,7 @@ func trimPath(path []byte) []byte {
 // constructRoutingTree constructs routing tree according to provided routes
 func (gb *gearbox) constructRoutingTree() error {
 	// Firstly, create root node
-	gb.routingTreeRoot = createEmptyRouteNode([]byte("root"))
+	gb.routingTreeRoot = createEmptyRouteNode("root")
 
 	for _, route := range gb.registeredRoutes {
 		currentNode := gb.routingTreeRoot
@@ -239,14 +232,14 @@ func (gb *gearbox) constructRoutingTree() error {
 		params := make([]*param, 0)
 
 		// Split path into slices of parts
-		parts := bytes.Split(route.Path, []byte("/"))
+		parts := strings.Split(route.Path, "/")
 
 		partsLen := len(parts)
 		for i := 1; i < partsLen; i++ {
 			part := parts[i]
 
 			// Do not create node if part is empty
-			if len(part) == 0 {
+			if part == "" {
 				continue
 			}
 
@@ -258,10 +251,10 @@ func (gb *gearbox) constructRoutingTree() error {
 
 			// Try to get a child of current node with part, otherwise
 			//creates a new node and make it current node
-			partNode, ok := currentNode.Children.Get(part).(*routeNode)
+			partNode, ok := currentNode.Children[string(part)]
 			if !ok {
 				partNode = createEmptyRouteNode(part)
-				currentNode.Children.Set(part, partNode)
+				currentNode.Children[string(part)] = partNode
 			}
 			currentNode = partNode
 		}
@@ -273,7 +266,7 @@ func (gb *gearbox) constructRoutingTree() error {
 
 		// Make sure that current node does not have a handler for route's method
 		var endpoints []*endpoint
-		if result, ok := currentNode.Endpoints.Get(route.Method).([]*endpoint); ok {
+		if result, ok := currentNode.Endpoints[string(route.Method)]; ok {
 			if ok := isValidEndpoint(result, currentEndpoint); !ok {
 				return fmt.Errorf("there already registered method %s for %s", route.Method, route.Path)
 			}
@@ -295,30 +288,29 @@ func (gb *gearbox) constructRoutingTree() error {
 		}
 
 		// Save handler to route's method for current node
-		currentNode.Endpoints.Set(route.Method, endpoints)
+		currentNode.Endpoints[string(route.Method)] = endpoints
 	}
 	return nil
 }
 
 // matchRoute matches provided method and path with handler if it's existing
-func (gb *gearbox) matchRoute(method, path []byte) (handlersChain, tst) {
+func (gb *gearbox) matchRoute(method, path string) (handlersChain, map[string]string) {
 	if handlers, params := gb.matchRouteAgainstRegistered(method, path); handlers != nil {
 		return handlers, params
 	}
 
 	if gb.registeredFallback != nil && gb.registeredFallback.Handlers != nil {
-		tst := newTST()
-		return gb.registeredFallback.Handlers, tst
+		return gb.registeredFallback.Handlers, make(map[string]string)
 	}
 
 	return nil, nil
 }
 
-func matchEndpointParams(ep *endpoint, paths [][]byte, pathIndex int) (tst, bool) {
-	paramDic := newTST()
+func matchEndpointParams(ep *endpoint, paths []string, pathIndex int) (map[string]string, bool) {
 	endpointParams := ep.Params
 	endpointParamsLen := len(endpointParams)
 	pathsLen := len(paths)
+	paramDic := make(map[string]string, endpointParamsLen)
 
 	paramIdx := 0
 	for paramIdx < endpointParamsLen {
@@ -337,16 +329,16 @@ func matchEndpointParams(ep *endpoint, paths [][]byte, pathIndex int) (tst, bool
 			return nil, false
 		}
 
-		if len(paths[pathIndex]) == 0 {
+		if paths[pathIndex] == "" {
 			pathIndex++
 			continue
 		}
 
 		if endpointParams[paramIdx].Type == ptParam {
-			paramDic.Set(endpointParams[paramIdx].Name, paths[pathIndex])
+			paramDic[string(endpointParams[paramIdx].Name)] = string(paths[pathIndex])
 		} else if endpointParams[paramIdx].Type == ptRegexp {
-			if match, _ := regexp.Match(endpointParams[paramIdx].Value, paths[pathIndex]); match {
-				paramDic.Set(endpointParams[paramIdx].Name, paths[pathIndex])
+			if match, _ := regexp.MatchString(endpointParams[paramIdx].Value, paths[pathIndex]); match {
+				paramDic[string(endpointParams[paramIdx].Name)] = string(paths[pathIndex])
 			} else if !endpointParams[paramIdx].IsOptional {
 				return nil, false
 			}
@@ -356,7 +348,7 @@ func matchEndpointParams(ep *endpoint, paths [][]byte, pathIndex int) (tst, bool
 		pathIndex++
 	}
 
-	for pathIndex < pathsLen && len(paths[pathIndex]) == 0 {
+	for pathIndex < pathsLen && paths[pathIndex] == "" {
 		pathIndex++
 	}
 
@@ -368,9 +360,9 @@ func matchEndpointParams(ep *endpoint, paths [][]byte, pathIndex int) (tst, bool
 	return paramDic, true
 }
 
-func matchNodeEndpoints(node *routeNode, method []byte, paths [][]byte,
+func matchNodeEndpoints(node *routeNode, method string, paths []string,
 	pathIndex int, result *matchParamsResult, wg *sync.WaitGroup) {
-	if endpoints, ok := node.Endpoints.Get(method).([]*endpoint); ok {
+	if endpoints, ok := node.Endpoints[string(method)]; ok {
 		for j := range endpoints {
 			if params, matched := matchEndpointParams(endpoints[j], paths, pathIndex); matched {
 				result.Matched = true
@@ -386,31 +378,31 @@ func matchNodeEndpoints(node *routeNode, method []byte, paths [][]byte,
 	wg.Done()
 }
 
-func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersChain, tst) {
+func (gb *gearbox) matchRouteAgainstRegistered(method, path string) (handlersChain, map[string]string) {
 	// Start with root node
 	currentNode := gb.routingTreeRoot
 
 	// Return if root is empty, or path is not valid
-	if currentNode == nil || len(path) == 0 || path[0] != '/' {
+	if currentNode == nil || path == "" || path[0] != '/' {
 		return nil, nil
 	}
 
-	if !gb.settings.CaseSensitive {
-		path = bytes.ToLower(path)
+	if gb.settings.CaseInSensitive {
+		path = strings.ToLower(path)
 	}
 
 	trimmedPath := trimPath(path)
 
 	// Try to get from cache if it's enabled
-	cacheKey := make([]byte, 0)
+	cacheKey := ""
 	if !gb.settings.DisableCaching {
-		cacheKey = append(method, trimmedPath...)
+		cacheKey = method + trimmedPath
 		if cacheResult, ok := gb.cache.Get(cacheKey).(*matchParamsResult); ok {
 			return cacheResult.Handlers, cacheResult.Params
 		}
 	}
 
-	paths := bytes.Split(trimmedPath, []byte("/"))
+	paths := strings.Split(trimmedPath, "/")
 
 	var wg sync.WaitGroup
 	lastMatchedNodes := []*matchParamsResult{{}}
@@ -419,12 +411,12 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersCha
 	go matchNodeEndpoints(currentNode, method, paths, 0, lastMatchedNodes[0], &wg)
 
 	for i := range paths {
-		if len(paths[i]) == 0 {
+		if paths[i] == "" {
 			continue
 		}
 
 		// Try to match part with a child of current node
-		pathNode, ok := currentNode.Children.Get(paths[i]).(*routeNode)
+		pathNode, ok := currentNode.Children[string(paths[i])]
 		if !ok {
 			break
 		}
@@ -445,9 +437,9 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path []byte) (handlersCha
 	for i := lastMatchedNodesIndex - 1; i >= 0; i-- {
 		if lastMatchedNodes[i].Matched {
 			if !gb.settings.DisableCaching {
-				go func(key []byte, matchResult *matchParamsResult) {
+				go func(key string, matchResult *matchParamsResult) {
 					gb.cache.Set(key, matchResult)
-				}(append(make([]byte, 0, len(cacheKey)), cacheKey...), lastMatchedNodes[i])
+				}(string(cacheKey), lastMatchedNodes[i])
 			}
 
 			return lastMatchedNodes[i].Handlers, lastMatchedNodes[i].Params

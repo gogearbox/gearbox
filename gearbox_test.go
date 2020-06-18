@@ -38,7 +38,7 @@ func (c *fakeConn) Write(b []byte) (int, error) {
 
 // startGearbox constructs routing tree and creates server
 func startGearbox(gb *gearbox) {
-	gb.cache = newCache(defaultCacheSize)
+	gb.cache = NewCache(defaultCacheSize)
 	gb.constructRoutingTree()
 	gb.httpServer = &fasthttp.Server{
 		Handler:      gb.handler,
@@ -157,7 +157,7 @@ func TestMethods(t *testing.T) {
 
 	// get instance of gearbox
 	gb := setupGearbox(&Settings{
-		CaseSensitive: true,
+		CaseInSensitive: true,
 	})
 
 	// register routes according to method
@@ -176,12 +176,13 @@ func TestMethods(t *testing.T) {
 		body       string
 	}{
 		{method: MethodGet, path: "/articles/search", statusCode: StatusOK},
-		{method: MethodPost, path: "/articles/search", statusCode: StatusNotFound},
+		{method: MethodGet, path: "/articles/search", statusCode: StatusOK},
+		{method: MethodGet, path: "/Articles/search", statusCode: StatusOK},
 		{method: MethodGet, path: "/articles/searching", statusCode: StatusNotFound},
 		{method: MethodHead, path: "/articles/test", statusCode: StatusOK},
 		{method: MethodPost, path: "/articles/204", statusCode: StatusOK},
 		{method: MethodPost, path: "/articles/205", statusCode: StatusUnauthorized},
-		{method: MethodPost, path: "/Articles/205", statusCode: StatusNotFound},
+		{method: MethodPost, path: "/Articles/205", statusCode: StatusUnauthorized},
 		{method: MethodPost, path: "/articles/206", statusCode: StatusNotFound},
 		{method: MethodGet, path: "/ping", statusCode: StatusOK, body: "pong"},
 		{method: MethodPut, path: "/posts", statusCode: StatusOK},
