@@ -154,7 +154,7 @@ func parseParameter(pathPart string) *param {
 	} else if paramsLen == 3 && params[0] == "" { // Regex parameter
 		return &param{
 			Name:       params[1],
-			Value:      string(params[2]),
+			Value:      params[2],
 			Type:       ptRegexp,
 			IsOptional: isOptional,
 		}
@@ -251,10 +251,10 @@ func (gb *gearbox) constructRoutingTree() error {
 
 			// Try to get a child of current node with part, otherwise
 			//creates a new node and make it current node
-			partNode, ok := currentNode.Children[string(part)]
+			partNode, ok := currentNode.Children[part]
 			if !ok {
 				partNode = createEmptyRouteNode(part)
-				currentNode.Children[string(part)] = partNode
+				currentNode.Children[part] = partNode
 			}
 			currentNode = partNode
 		}
@@ -266,7 +266,7 @@ func (gb *gearbox) constructRoutingTree() error {
 
 		// Make sure that current node does not have a handler for route's method
 		var endpoints []*endpoint
-		if result, ok := currentNode.Endpoints[string(route.Method)]; ok {
+		if result, ok := currentNode.Endpoints[route.Method]; ok {
 			if ok := isValidEndpoint(result, currentEndpoint); !ok {
 				return fmt.Errorf("there already registered method %s for %s", route.Method, route.Path)
 			}
@@ -288,7 +288,7 @@ func (gb *gearbox) constructRoutingTree() error {
 		}
 
 		// Save handler to route's method for current node
-		currentNode.Endpoints[string(route.Method)] = endpoints
+		currentNode.Endpoints[route.Method] = endpoints
 	}
 	return nil
 }
@@ -335,10 +335,10 @@ func matchEndpointParams(ep *endpoint, paths []string, pathIndex int) (map[strin
 		}
 
 		if endpointParams[paramIdx].Type == ptParam {
-			paramDic[string(endpointParams[paramIdx].Name)] = string(paths[pathIndex])
+			paramDic[endpointParams[paramIdx].Name] = paths[pathIndex]
 		} else if endpointParams[paramIdx].Type == ptRegexp {
 			if match, _ := regexp.MatchString(endpointParams[paramIdx].Value, paths[pathIndex]); match {
-				paramDic[string(endpointParams[paramIdx].Name)] = string(paths[pathIndex])
+				paramDic[endpointParams[paramIdx].Name] = paths[pathIndex]
 			} else if !endpointParams[paramIdx].IsOptional {
 				return nil, false
 			}
@@ -362,7 +362,7 @@ func matchEndpointParams(ep *endpoint, paths []string, pathIndex int) (map[strin
 
 func matchNodeEndpoints(node *routeNode, method string, paths []string,
 	pathIndex int, result *matchParamsResult, wg *sync.WaitGroup) {
-	if endpoints, ok := node.Endpoints[string(method)]; ok {
+	if endpoints, ok := node.Endpoints[method]; ok {
 		for j := range endpoints {
 			if params, matched := matchEndpointParams(endpoints[j], paths, pathIndex); matched {
 				result.Matched = true
@@ -416,7 +416,7 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path string) (handlersCha
 		}
 
 		// Try to match part with a child of current node
-		pathNode, ok := currentNode.Children[string(paths[i])]
+		pathNode, ok := currentNode.Children[paths[i]]
 		if !ok {
 			break
 		}
