@@ -252,7 +252,8 @@ func TestStartWithTLS(t *testing.T) {
 		time.Sleep(1000 * time.Millisecond)
 		_, err := tls.DialWithDialer(&net.Dialer{
 			Timeout: time.Second * 10,
-		}, "tcp",
+		},
+			"tcp",
 			"localhost:3000",
 			&tls.Config{
 				InsecureSkipVerify: true,
