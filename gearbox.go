@@ -278,7 +278,7 @@ func (gb *gearbox) Start(address string) error {
 		printStartupMessage(address)
 	}
 
-	if gb.settings.TLSEnabled == true {
+	if gb.settings.TLSEnabled {
 		return gb.httpServer.ServeTLS(ln, gb.settings.TLSCertPath, gb.settings.TLSKeyPath)
 	}
 	return gb.httpServer.Serve(ln)
