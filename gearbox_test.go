@@ -241,25 +241,34 @@ func TestStart(t *testing.T) {
 func TestStartWithTLS(t *testing.T) {
 	gb := New(&Settings{
 		DisableStartupMessage: true,
-		TLSKeyPath:            "ssl-cert-snakeoil.crt.key",
-		TLSCertPath:           "ssl-cert-snakeoil.crt.crt",
+		TLSKeyPath:            "ssl-cert-snakeoil.key",
+		TLSCertPath:           "ssl-cert-snakeoil.crt",
 		TLSEnabled:            true,
 	})
+	// use a channel to hand off the error ( if any )
+	errs := make(chan error, 1)
 
 	go func() {
 		time.Sleep(1000 * time.Millisecond)
-		_, err := tls.Dial("tcp",
+		_, err := tls.DialWithDialer(&net.Dialer{
+			Timeout: time.Second * 10,
+		},
+			"tcp",
 			"localhost:3000",
 			&tls.Config{
 				InsecureSkipVerify: true,
 			})
-		if err != nil {
-			t.Fatalf("StartWithSSL failed to connect with TLS error: %s", err)
-		}
+		errs <- err
 		gb.Stop()
 	}()
 
 	gb.Start(":3000")
+
+	// wait for an error
+	err := <-errs
+	if err != nil {
+		t.Fatalf("StartWithSSL failed to connect with TLS error: %s", err)
+	}
 }
 
 // TestStartInvalidListener tests start with invalid listener
