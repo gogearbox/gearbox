@@ -157,7 +157,8 @@ func TestMethods(t *testing.T) {
 
 	// get instance of gearbox
 	gb := setupGearbox(&Settings{
-		CaseInSensitive: true,
+		CaseSensitive: true,
+		Prefork:       true,
 	})
 
 	// register routes according to method

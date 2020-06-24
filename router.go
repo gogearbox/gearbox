@@ -86,7 +86,7 @@ func validateRoutePath(path string) error {
 // registerRoute registers handler with method and path
 func (gb *gearbox) registerRoute(method, path string, handlers handlersChain) *Route {
 
-	if gb.settings.CaseInSensitive {
+	if gb.settings.CaseSensitive {
 		path = strings.ToLower(path)
 	}
 
@@ -387,7 +387,7 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path string) (handlersCha
 		return nil, nil
 	}
 
-	if gb.settings.CaseInSensitive {
+	if gb.settings.CaseSensitive {
 		path = strings.ToLower(path)
 	}
 

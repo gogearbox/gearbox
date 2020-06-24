@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"time"
 
 	"github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/prefork"
 )
 
 // Exported constants
 const (
-	Version = "1.0.2"   // Version of gearbox
+	Version = "1.0.3"   // Version of gearbox
 	Name    = "Gearbox" // Name of gearbox
 	// http://patorjk.com/software/taag/#p=display&f=Big%20Money-ne&t=Gearbox
 	banner = `
@@ -154,7 +156,7 @@ type gearbox struct {
 // Settings struct holds server settings
 type Settings struct {
 	// Enable case sensitive routing
-	CaseInSensitive bool // default false
+	CaseSensitive bool // default false
 
 	// Maximum size of LRU cache that will be used in routing if it's enabled
 	CacheSize int // default 1000
@@ -167,6 +169,10 @@ type Settings struct {
 
 	// Maximum number of concurrent connections
 	Concurrency int // default 256 * 1024
+
+	// This will spawn multiple Go processes listening on the same port
+	// Default: false
+	Prefork bool
 
 	// LRU caching used to speed up routing
 	DisableCaching bool // default false
@@ -241,6 +247,18 @@ func (gb *gearbox) Start(address string) error {
 
 	gb.cache = NewCache(gb.settings.CacheSize)
 
+	if gb.settings.Prefork {
+		if !gb.settings.DisableStartupMessage {
+			printStartupMessage(address)
+		}
+
+		pf := prefork.New(gb.httpServer)
+		pf.Reuseport = true
+		pf.Network = "tcp4"
+
+		return pf.ListenAndServe(address)
+	}
+
 	ln, err := net.Listen("tcp4", address)
 	if err != nil {
 		return err
@@ -248,7 +266,7 @@ func (gb *gearbox) Start(address string) error {
 	gb.address = address
 
 	if !gb.settings.DisableStartupMessage {
-		log.Printf(banner, Version, gb.address)
+		printStartupMessage(address)
 	}
 
 	return gb.httpServer.Serve(ln)
@@ -380,4 +398,12 @@ func (gb *gearbox) handler(ctx *fasthttp.RequestCtx) {
 	}
 
 	ctx.SetStatusCode(StatusNotFound)
+}
+
+func printStartupMessage(addr string) {
+	if prefork.IsChild() {
+		log.Printf("Started child proc #%v\n", os.Getpid())
+	} else {
+		log.Printf(banner, Version, addr)
+	}
 }
