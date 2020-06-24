@@ -265,6 +265,9 @@ func (gb *gearbox) Start(address string) error {
 		pf.Reuseport = true
 		pf.Network = "tcp4"
 
+		if gb.settings.TLSEnabled {
+			return pf.ListenAndServeTLS(address, gb.settings.TLSCertPath, gb.settings.TLSKeyPath)
+		}
 		return pf.ListenAndServe(address)
 	}
 
