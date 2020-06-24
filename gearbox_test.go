@@ -3,6 +3,7 @@ package gearbox
 import (
 	"bufio"
 	"bytes"
+	"crypto/tls"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -230,6 +231,31 @@ func TestStart(t *testing.T) {
 
 	go func() {
 		time.Sleep(1000 * time.Millisecond)
+		gb.Stop()
+	}()
+
+	gb.Start(":3000")
+}
+
+// TestStart tests start service method
+func TestStartWithTLS(t *testing.T) {
+	gb := New(&Settings{
+		DisableStartupMessage: true,
+		TLSKeyPath:            "ssl-cert-snakeoil.crt.key",
+		TLSCertPath:           "ssl-cert-snakeoil.crt.crt",
+		TLSEnabled:            true,
+	})
+
+	go func() {
+		time.Sleep(1000 * time.Millisecond)
+		_, err := tls.Dial("tcp",
+			"localhost:3000",
+			&tls.Config{
+				InsecureSkipVerify: true,
+			})
+		if err != nil {
+			t.Fatalf("StartWithSSL failed to connect with TLS error: %s", err)
+		}
 		gb.Stop()
 	}()
 

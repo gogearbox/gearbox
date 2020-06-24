@@ -200,6 +200,15 @@ type Settings struct {
 
 	// The maximum amount of time to wait for the next request when keep-alive is enabled
 	IdleTimeout time.Duration // default unlimited
+
+	// Enable TLS or not
+	TLSEnabled bool // default false
+
+	// The path of the TLS certificate
+	TLSCertPath string // default ""
+
+	// The path of the TLS key
+	TLSKeyPath string // default ""
 }
 
 // Route struct which holds each route info
@@ -269,6 +278,9 @@ func (gb *gearbox) Start(address string) error {
 		printStartupMessage(address)
 	}
 
+	if gb.settings.TLSEnabled == true {
+		return gb.httpServer.ServeTLS(ln, gb.settings.TLSCertPath, gb.settings.TLSKeyPath)
+	}
 	return gb.httpServer.Serve(ln)
 }
 
