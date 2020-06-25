@@ -1,6 +1,8 @@
 package gearbox
 
 import (
+	"fmt"
+
 	"github.com/valyala/fasthttp"
 )
 
@@ -20,7 +22,20 @@ type Context struct {
 
 // Next function is used to successfully pass from current middleware to next middleware.
 // if the middleware thinks it's okay to pass it.
-func (ctx *Context) Next() {
+func (ctx *Context) Next(err ...error) {
+	if len(err) > 0 {
+		defer func() {
+			if r := recover(); r != nil {
+				err, ok := r.(error)
+				if !ok {
+					err = fmt.Errorf("%v", r)
+				}
+				ctx.Next(err)
+				return
+			}
+		}()
+		ctx.Next()
+	}
 	ctx.index++
 	ctx.handlers[ctx.index](ctx)
 }
