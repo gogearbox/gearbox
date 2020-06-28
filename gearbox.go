@@ -40,8 +40,8 @@ const (
 	// defaultMaxRequestBodySize is the maximum request body size the server
 	defaultMaxRequestBodySize = 4 * 1024 * 1024
 
-	// defaultMaxRequestParamsCount is the maximum number of request params
-	defaultMaxRouteParamsCount = 1024
+	// defaultMaxRouteParams is the maximum number of routes params
+	defaultMaxRouteParams = 1024
 
 	// defaultMaxRequestURLLength is the maximum request url length
 	defaultMaxRequestURLLength = 2048
@@ -174,7 +174,7 @@ type Settings struct {
 	MaxRequestBodySize int // default 4 * 1024 * 1024
 
 	// Maximum number of route params count
-	MaxRouteParamsCount int // default 1024
+	MaxRouteParams int // default 1024
 
 	// Max request url length
 	MaxRequestURLLength int // default 2048
@@ -250,8 +250,8 @@ func New(settings ...*Settings) Gearbox {
 		gb.settings.MaxRequestBodySize = defaultMaxRequestBodySize
 	}
 
-	if gb.settings.MaxRouteParamsCount <= 0 || gb.settings.MaxRouteParamsCount > defaultMaxRouteParamsCount {
-		gb.settings.MaxRouteParamsCount = defaultMaxRouteParamsCount
+	if gb.settings.MaxRouteParams <= 0 || gb.settings.MaxRouteParams > defaultMaxRouteParams {
+		gb.settings.MaxRouteParams = defaultMaxRouteParams
 	}
 
 	if gb.settings.MaxRequestURLLength <= 0 || gb.settings.MaxRequestURLLength > defaultMaxRequestURLLength {
