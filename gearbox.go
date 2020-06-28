@@ -43,8 +43,8 @@ const (
 	// defaultMaxRequestParamsCount is the maximum request params count
 	defaultMaxRequestParamsCount = 1024
 
-	// defaultMaxRequestUrlLength is the maximum request url length
-	defaultMaxRequestUrlLength = 2048
+	// defaultMaxRequestURLLength is the maximum request url length
+	defaultMaxRequestURLLength = 2048
 )
 
 // HTTP methods were copied from net/http.
@@ -177,7 +177,7 @@ type Settings struct {
 	MaxRequestParamsCount int // default 1024
 
 	// Max request url length
-	MaxRequestUrlLength int // default 2048
+	MaxRequestURLLength int // default 2048
 
 	// Maximum number of concurrent connections
 	Concurrency int // default 256 * 1024
@@ -255,7 +255,7 @@ func New(settings ...*Settings) Gearbox {
 	}
 
 	if gb.settings.MaxRequestUrlLength <= 0 {
-		gb.settings.MaxRequestUrlLength = defaultMaxRequestUrlLength
+		gb.settings.MaxRequestUrlLength = defaultMaxRequestURLLength
 	}
 
 	if gb.settings.Concurrency <= 0 {

@@ -54,7 +54,7 @@ func validateRoutePath(path string) error {
 		return fmt.Errorf("length is zero")
 	}
 
-	if length == defaultMaxRequestUrlLength {
+	if length == defaultMaxRequestURLLength {
 		return fmt.Errorf("length request url exceed the max limit")
 	}
 
