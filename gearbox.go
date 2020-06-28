@@ -40,7 +40,7 @@ const (
 	// defaultMaxRequestBodySize is the maximum request body size the server
 	defaultMaxRequestBodySize = 4 * 1024 * 1024
 
-	// defaultMaxRequestParamsCount is the maximum request params count
+	// defaultMaxRequestParamsCount is the maximum number of request params
 	defaultMaxRequestParamsCount = 1024
 
 	// defaultMaxRequestURLLength is the maximum request url length
