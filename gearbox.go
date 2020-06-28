@@ -254,8 +254,8 @@ func New(settings ...*Settings) Gearbox {
 		gb.settings.MaxRequestParamsCount = defaultMaxRequestParamsCount
 	}
 
-	if gb.settings.MaxRequestUrlLength <= 0 {
-		gb.settings.MaxRequestUrlLength = defaultMaxRequestURLLength
+	if gb.settings.MaxRequestURLLength <= 0 || gb.settings.MaxRequestURLLength > defaultMaxRequestURLLength {
+		gb.settings.MaxRequestURLLength = defaultMaxRequestURLLength
 	}
 
 	if gb.settings.Concurrency <= 0 {

@@ -387,7 +387,7 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path string) (handlersCha
 	currentNode := gb.routingTreeRoot
 
 	// Return if root is empty, or path is not valid
-	if currentNode == nil || path == "" || path[0] != '/' || len(path) > defaultMaxRequestUrlLength {
+	if currentNode == nil || path == "" || path[0] != '/' || len(path) > defaultMaxRequestURLLength {
 		return nil, nil
 	}
 
