@@ -54,6 +54,10 @@ func validateRoutePath(path string) error {
 		return fmt.Errorf("length is zero")
 	}
 
+	if length == defaultMaxRequestURLLength {
+		return fmt.Errorf("length request url exceed the max limit")
+	}
+
 	// Make sure path starts with /
 	if path[0] != '/' {
 		return fmt.Errorf("path must start with /")
@@ -383,7 +387,7 @@ func (gb *gearbox) matchRouteAgainstRegistered(method, path string) (handlersCha
 	currentNode := gb.routingTreeRoot
 
 	// Return if root is empty, or path is not valid
-	if currentNode == nil || path == "" || path[0] != '/' {
+	if currentNode == nil || path == "" || path[0] != '/' || len(path) > defaultMaxRequestURLLength {
 		return nil, nil
 	}
 
