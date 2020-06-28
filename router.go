@@ -54,6 +54,10 @@ func validateRoutePath(path string) error {
 		return fmt.Errorf("length is zero")
 	}
 
+	if length == defaultMaxRequestUrlLength {
+		return fmt.Errorf("length request url exceed the max limit")
+	}
+
 	// Make sure path starts with /
 	if path[0] != '/' {
 		return fmt.Errorf("path must start with /")
