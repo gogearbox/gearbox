@@ -173,7 +173,7 @@ Gearbox is an open source project sponsored by companies and organizations to ma
 
 | <img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/trella-sponsor.png"/> 	|
 |:-:	|
-| [trella](https://trella.app): *A b2b technology platform and trucking <br/>marketplace that connects shippers with carriers* |
+| [trella](https://www.trella.app): *A b2b technology platform and trucking <br/>marketplace that connects shippers with carriers* |
 
 
 ### Contributors
