@@ -169,11 +169,11 @@ func main() {
 Check [Our Docs](https://gogearbox.com/docs) for more information about **gearbox** and how to **contribute**
 
 ### Sponsors
-Gearbox is an open source project sponsored by companies and organizations to make it better
+Organizations that are helping to manage, promote, and support **Gearbox** :gear: 
 
 | <img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/trella-sponsor.png"/> 	|
 |:-:	|
-| [trella](https://trella.app): *A b2b technology platform and trucking <br/>marketplace that connects shippers with carriers* |
+| [trella](https://www.trella.app): *A B2B technology platform and trucking <br/>marketplace that connects shippers with carriers* |
 
 
 ### Contributors
