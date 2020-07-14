@@ -16,3 +16,5 @@
 *.DS_Store
 cover.out
 coverage.txt
+
+.ionide
