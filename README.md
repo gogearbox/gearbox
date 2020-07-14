@@ -183,9 +183,9 @@ Gearbox :gear: is being used by multiple organizations including but not limited
 |:-:	|
 | [trella](https://www.trella.app): *A B2B technology platform and trucking <br/>marketplace that connects shippers with carriers* |
 
-| <img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/erply-sponser.png"/> 	|
+| <img src="https://raw.githubusercontent.com/gogearbox/gearbox/add-erply/assets/erply-user.png"/> 	|
 |:-:	|
-| [erply](https://erply.com): Erply is an enterprise software company focusing on point of sale and inventory management technology.  |
+| [erply](https://erply.com): *Erply is an enterprise software company<br> focusing on point of sale and inventory management technology.*  |
 
 
 
