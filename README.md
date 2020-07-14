@@ -176,11 +176,11 @@ Organizations that are helping to manage, promote, and support **Gearbox** :gear
 | [trella](https://www.trella.app): *A B2B technology platform and trucking <br/>marketplace that connects shippers with carriers* |
 
 
-### Users
-Gearbox :gear: is being used by multiple organizations including but not limited to 
+### Who uses Gearbox
+**Gearbox** :gear: is being used by multiple organizations including but not limited to 
 
-[<img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/trella-sponsor.png"/>](http://www.trella.app) 
-[<img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/erply-user.png"/>](http://erply.com) 		
+[<img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/trella-sponsor.png"/>](https://www.trella.app) 
+[<img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/erply-user.png"/>](https://erply.com) 		
 
 
 
