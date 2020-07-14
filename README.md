@@ -177,7 +177,7 @@ Organizations that are helping to manage, promote, and support **Gearbox** :gear
 
 
 ### Users
-Gearbox :gear: is starting to be used by multiple organizations including but not limited to 
+Gearbox :gear: is being used by multiple organizations including but not limited to 
 
 | <img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/trella-sponsor.png"/> 	|
 |:-:	|
@@ -185,7 +185,7 @@ Gearbox :gear: is starting to be used by multiple organizations including but no
 
 | <img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/erply-sponser.png"/> 	|
 |:-:	|
-| [erply](https://erply.com): *Erply is an enterprise software company focusing on point of sale and inventory management technology. * |
+| [erply](https://erply.com): Erply is an enterprise software company focusing on point of sale and inventory management technology.  |
 
 
 
