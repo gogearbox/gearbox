@@ -6,7 +6,7 @@ import (
 )
 
 // Test passing the request from middleware to handler
-func Test_Next(t *testing.T) {
+func TestNext(t *testing.T) {
 	// testing routes
 	routes := []struct {
 		path       string
@@ -17,9 +17,7 @@ func Test_Next(t *testing.T) {
 	}
 
 	// get instance of gearbox
-	gb := new(gearbox)
-	gb.registeredRoutes = make([]*Route, 0)
-	gb.settings = &Settings{}
+	gb := setupGearbox()
 
 	// register routes according to method
 	for _, r := range routes {

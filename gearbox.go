@@ -2,10 +2,11 @@
 package gearbox
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"os"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/valyala/fasthttp"
@@ -14,20 +15,17 @@ import (
 
 // Exported constants
 const (
-	Version = "1.0.3"   // Version of gearbox
+	Version = "1.0.4"   // Version of gearbox
 	Name    = "Gearbox" // Name of gearbox
 	// http://patorjk.com/software/taag/#p=display&f=Big%20Money-ne&t=Gearbox
 	banner = `
-  /$$$$$$                                /$$                          
- /$$__  $$                              | $$                          
-| $$  \__/  /$$$$$$   /$$$$$$   /$$$$$$ | $$$$$$$   /$$$$$$  /$$   /$$
-| $$ /$$$$ /$$__  $$ |____  $$ /$$__  $$| $$__  $$ /$$__  $$|  $$ /$$/
-| $$|_  $$| $$$$$$$$  /$$$$$$$| $$  \__/| $$  \ $$| $$  \ $$ \  $$$$/ 
-| $$  \ $$| $$_____/ /$$__  $$| $$      | $$  | $$| $$  | $$  >$$  $$ 
-|  $$$$$$/|  $$$$$$$|  $$$$$$$| $$      | $$$$$$$/|  $$$$$$/ /$$/\  $$
- \______/  \_______/ \_______/|__/      |_______/  \______/ |__/  \__/  %s
-Listening on %s
-`
+  _____                     _                 
+ / ____|                   | |                
+| |  __   ___   __ _  _ __ | |__    ___ __  __
+| | |_ | / _ \ / _' || '__|| '_ \  / _ \\ \/ /
+| |__| ||  __/| (_| || |   | |_) || (_) |>  < 
+ \_____| \___| \__,_||_|   |_.__/  \___//_/\_\ v%s
+Listening on %s`
 )
 
 const (
@@ -135,31 +133,43 @@ type Gearbox interface {
 	Connect(path string, handlers ...handlerFunc) *Route
 	Options(path string, handlers ...handlerFunc) *Route
 	Trace(path string, handlers ...handlerFunc) *Route
-	Method(method, path string, handlers ...handlerFunc) *Route
-	Fallback(handlers ...handlerFunc) error
+	NotFound(handlers ...handlerFunc)
 	Use(middlewares ...handlerFunc)
 	Group(prefix string, routes []*Route) []*Route
 }
 
 // gearbox implements Gearbox interface
 type gearbox struct {
-	httpServer         *fasthttp.Server
-	routingTreeRoot    *routeNode
-	registeredRoutes   []*Route
-	address            string // server address
-	handlers           handlersChain
-	registeredFallback *routerFallback
-	cache              Cache
-	settings           *Settings
+	httpServer       *fasthttp.Server
+	router           *router
+	registeredRoutes []*Route
+	pool             sync.Pool
+	address          string // server address
+	middlewares      handlersChain
+	settings         *Settings
 }
 
 // Settings struct holds server settings
 type Settings struct {
 	// Enable case sensitive routing
-	CaseSensitive bool // default false
+	CaseInSensitive bool // default false
 
 	// Maximum size of LRU cache that will be used in routing if it's enabled
 	CacheSize int // default 1000
+
+	// Enables answering with HTTP status code 405 if request does not match
+	// with any route, but there are another methods are allowed for that route
+	// otherwise answer with Not Found handlers or status code 404.
+	HandleMethodNotAllowed bool // default false
+
+	// Enables automatic replies to OPTIONS requests if there are no handlers
+	// registered for that route
+	HandleOPTIONS bool // default false
+
+	// Enables automatic recovering from panic while executing handlers by
+	// answering with HTTP status code 500 and logging error message without
+	// stopping service
+	AutoRecover bool // default false
 
 	// ServerName for sending in response headers
 	ServerName string // default ""
@@ -242,6 +252,17 @@ func New(settings ...*Settings) Gearbox {
 		gb.settings.Concurrency = defaultConcurrency
 	}
 
+	// Initialize router
+	gb.router = &router{
+		settings: gb.settings,
+		cache:    make(map[string]*matchResult),
+		pool: sync.Pool{
+			New: func() interface{} {
+				return new(context)
+			},
+		},
+	}
+
 	gb.httpServer = gb.newHTTPServer()
 
 	return gb
@@ -249,12 +270,8 @@ func New(settings ...*Settings) Gearbox {
 
 // Start handling requests
 func (gb *gearbox) Start(address string) error {
-	// Construct routing tree
-	if err := gb.constructRoutingTree(); err != nil {
-		return fmt.Errorf("unable to construct routing %s", err.Error())
-	}
-
-	gb.cache = NewCache(gb.settings.CacheSize)
+	// Setup router
+	gb.setupRouter()
 
 	if gb.settings.Prefork {
 		if !gb.settings.DisableStartupMessage {
@@ -296,7 +313,7 @@ func (dl *customLogger) Printf(format string, args ...interface{}) {
 // newHTTPServer returns a new instance of fasthttp server
 func (gb *gearbox) newHTTPServer() *fasthttp.Server {
 	return &fasthttp.Server{
-		Handler:                       gb.handler,
+		Handler:                       gb.router.Handler,
 		Logger:                        &customLogger{},
 		LogAllErrors:                  false,
 		Name:                          gb.settings.ServerName,
@@ -310,6 +327,34 @@ func (gb *gearbox) newHTTPServer() *fasthttp.Server {
 		WriteTimeout:                  gb.settings.WriteTimeout,
 		IdleTimeout:                   gb.settings.IdleTimeout,
 	}
+}
+
+// registerRoute registers handlers with method and path
+func (gb *gearbox) registerRoute(method, path string, handlers handlersChain) *Route {
+	if gb.settings.CaseInSensitive {
+		path = strings.ToLower(path)
+	}
+
+	route := &Route{
+		Path:     path,
+		Method:   method,
+		Handlers: handlers,
+	}
+
+	// Add route to registered routes
+	gb.registeredRoutes = append(gb.registeredRoutes, route)
+	return route
+}
+
+// setupRouter initializes router with registered routes
+func (gb *gearbox) setupRouter() {
+	for _, route := range gb.registeredRoutes {
+		gb.router.handle(route.Method, route.Path, append(gb.middlewares, route.Handlers...))
+	}
+
+	// Frees intermediate stores after initializing router
+	gb.registeredRoutes = nil
+	gb.middlewares = nil
 }
 
 // Stop serving
@@ -327,57 +372,53 @@ func (gb *gearbox) Stop() error {
 
 // Get registers an http relevant method
 func (gb *gearbox) Get(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute(string(MethodGet), string(path), handlers)
+	return gb.registerRoute(MethodGet, path, handlers)
 }
 
 // Head registers an http relevant method
 func (gb *gearbox) Head(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute(string(MethodHead), string(path), handlers)
+	return gb.registerRoute(MethodHead, path, handlers)
 }
 
 // Post registers an http relevant method
 func (gb *gearbox) Post(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute(string(MethodPost), string(path), handlers)
+	return gb.registerRoute(MethodPost, path, handlers)
 }
 
 // Put registers an http relevant method
 func (gb *gearbox) Put(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute(string(MethodPut), string(path), handlers)
+	return gb.registerRoute(MethodPut, path, handlers)
 }
 
 // Patch registers an http relevant method
 func (gb *gearbox) Patch(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute(string(MethodPatch), string(path), handlers)
+	return gb.registerRoute(MethodPatch, path, handlers)
 }
 
 // Delete registers an http relevant method
 func (gb *gearbox) Delete(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute(string(MethodDelete), string(path), handlers)
+	return gb.registerRoute(MethodDelete, path, handlers)
 }
 
 // Connect registers an http relevant method
 func (gb *gearbox) Connect(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute(string(MethodConnect), string(path), handlers)
+	return gb.registerRoute(MethodConnect, path, handlers)
 }
 
 // Options registers an http relevant method
 func (gb *gearbox) Options(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute(string(MethodOptions), string(path), handlers)
+	return gb.registerRoute(MethodOptions, path, handlers)
 }
 
 // Trace registers an http relevant method
 func (gb *gearbox) Trace(path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute(string(MethodTrace), string(path), handlers)
+	return gb.registerRoute(MethodTrace, path, handlers)
 }
 
-// Trace registers an http relevant method
-func (gb *gearbox) Method(method, path string, handlers ...handlerFunc) *Route {
-	return gb.registerRoute(string(method), string(path), handlers)
-}
-
-// Fallback registers an http handler only fired when no other routes match with request
-func (gb *gearbox) Fallback(handlers ...handlerFunc) error {
-	return gb.registerFallback(handlers)
+// NotFound registers an http handlers that will be called when no other routes
+// match with request
+func (gb *gearbox) NotFound(handlers ...handlerFunc) {
+	gb.router.SetNotFound(handlers)
 }
 
 // Use attaches a global middleware to the gearbox object.
@@ -385,10 +426,10 @@ func (gb *gearbox) Fallback(handlers ...handlerFunc) error {
 // it will always be executed before the handler and/or middlewares for the matched request
 // For example, this is the right place for a logger or some security check or permission checking.
 func (gb *gearbox) Use(middlewares ...handlerFunc) {
-	gb.handlers = append(gb.handlers, middlewares...)
+	gb.middlewares = append(gb.middlewares, middlewares...)
 }
 
-// Group appends a prefix to registered routes.
+// Group appends a prefix to registered routes
 func (gb *gearbox) Group(prefix string, routes []*Route) []*Route {
 	for _, route := range routes {
 		route.Path = prefix + route.Path
@@ -396,25 +437,8 @@ func (gb *gearbox) Group(prefix string, routes []*Route) []*Route {
 	return routes
 }
 
-// Handles all incoming requests and route them to proper handler according to
-// method and path
-func (gb *gearbox) handler(ctx *fasthttp.RequestCtx) {
-	if handlers, params := gb.matchRoute(
-		GetString(ctx.Request.Header.Method()),
-		GetString(ctx.URI().Path())); handlers != nil {
-		context := Context{
-			RequestCtx: ctx,
-			Params:     params,
-			handlers:   append(gb.handlers, handlers...),
-			index:      0,
-		}
-		context.handlers[0](&context)
-		return
-	}
-
-	ctx.SetStatusCode(StatusNotFound)
-}
-
+// printStartupMessage prints gearbox info log message in parent process
+// and prints process id for child process
 func printStartupMessage(addr string) {
 	if prefork.IsChild() {
 		log.Printf("Started child proc #%v\n", os.Getpid())
