@@ -37,6 +37,12 @@ const (
 
 	// defaultMaxRequestBodySize is the maximum request body size the server
 	defaultMaxRequestBodySize = 4 * 1024 * 1024
+
+	// defaultMaxRouteParams is the maximum number of routes params
+	defaultMaxRouteParams = 1024
+
+	// defaultMaxRequestURLLength is the maximum request url length
+	defaultMaxRequestURLLength = 2048
 )
 
 // HTTP methods were copied from net/http.
@@ -177,6 +183,12 @@ type Settings struct {
 	// Maximum request body size
 	MaxRequestBodySize int // default 4 * 1024 * 1024
 
+	// Maximum number of route params count
+	MaxRouteParams int // default 1024
+
+	// Max request url length
+	MaxRequestURLLength int // default 2048
+
 	// Maximum number of concurrent connections
 	Concurrency int // default 256 * 1024
 
@@ -246,6 +258,14 @@ func New(settings ...*Settings) Gearbox {
 
 	if gb.settings.MaxRequestBodySize <= 0 {
 		gb.settings.MaxRequestBodySize = defaultMaxRequestBodySize
+	}
+
+	if gb.settings.MaxRouteParams <= 0 || gb.settings.MaxRouteParams > defaultMaxRouteParams {
+		gb.settings.MaxRouteParams = defaultMaxRouteParams
+	}
+
+	if gb.settings.MaxRequestURLLength <= 0 || gb.settings.MaxRequestURLLength > defaultMaxRequestURLLength {
+		gb.settings.MaxRequestURLLength = defaultMaxRequestURLLength
 	}
 
 	if gb.settings.Concurrency <= 0 {

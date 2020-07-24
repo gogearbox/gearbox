@@ -153,8 +153,25 @@ func main() {
 + Add a [GitHub Star](https://github.com/gogearbox/gearbox/stargazers)
 + [Suggest new features, ideas and optimizations](https://github.com/gogearbox/gearbox/issues)
 + [Report issues](https://github.com/gogearbox/gearbox/issues)
++ Donating a [cup of coffee](https://buymeacoff.ee/gearbox)
+
 
 Check [Our Docs](https://gogearbox.com/docs) for more information about **gearbox** and how to **contribute**
+
+### Sponsors
+Organizations that are helping to manage, promote, and support **Gearbox** :gear: 
+
+| <img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/trella-sponsor.png"/> 	|
+|:-:	|
+| [trella](https://www.trella.app): *A B2B technology platform and trucking <br/>marketplace that connects shippers with carriers* |
+
+
+### Who uses Gearbox
+**Gearbox** :gear: is being used by multiple organizations including but not limited to 
+
+[<img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/erply-user.png"/>](https://erply.com) 		
+
+
 
 ### Contributors
 
