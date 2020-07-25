@@ -15,7 +15,7 @@ import (
 
 // Exported constants
 const (
-	Version = "1.0.4"   // Version of gearbox
+	Version = "1.1.0"   // Version of gearbox
 	Name    = "Gearbox" // Name of gearbox
 	// http://patorjk.com/software/taag/#p=display&f=Big%20Money-ne&t=Gearbox
 	banner = `
@@ -139,9 +139,10 @@ type Gearbox interface {
 	Connect(path string, handlers ...handlerFunc) *Route
 	Options(path string, handlers ...handlerFunc) *Route
 	Trace(path string, handlers ...handlerFunc) *Route
+	Group(prefix string, routes []*Route) []*Route
+	Static(prefix, root string)
 	NotFound(handlers ...handlerFunc)
 	Use(middlewares ...handlerFunc)
-	Group(prefix string, routes []*Route) []*Route
 }
 
 // gearbox implements Gearbox interface
@@ -327,6 +328,7 @@ func (gb *gearbox) Start(address string) error {
 type customLogger struct{}
 
 func (dl *customLogger) Printf(format string, args ...interface{}) {
+	//log.Printf(format)
 }
 
 // newHTTPServer returns a new instance of fasthttp server
@@ -434,6 +436,78 @@ func (gb *gearbox) Trace(path string, handlers ...handlerFunc) *Route {
 	return gb.registerRoute(MethodTrace, path, handlers)
 }
 
+// Group appends a prefix to registered routes
+func (gb *gearbox) Group(prefix string, routes []*Route) []*Route {
+	for _, route := range routes {
+		route.Path = prefix + route.Path
+	}
+	return routes
+}
+
+func (gb *gearbox) Static(prefix, root string) {
+	if gb.settings.CaseInSensitive {
+		prefix = strings.ToLower(prefix)
+	}
+
+	// remove trailing slash
+	if len(root) > 1 && root[len(root)-1] == '/' {
+		root = root[:len(root)-1]
+	}
+
+	prefixLen := len(prefix)
+	if prefixLen > 1 && prefix[prefixLen-1] == '/' {
+		prefix = prefix[:prefixLen-1]
+	}
+
+	fs := &fasthttp.FS{
+		Root:       root,
+		IndexNames: []string{"index.html"},
+		PathRewrite: func(ctx *fasthttp.RequestCtx) []byte {
+			path := ctx.Path()
+
+			if len(path) >= prefixLen {
+				path = path[prefixLen:]
+			}
+
+			if len(path) > 0 && path[0] != '/' {
+				path = append([]byte("/"), path...)
+			} else if len(path) == 0 {
+				path = []byte("/")
+			}
+			return path
+		},
+	}
+
+	fileHandler := fs.NewRequestHandler()
+	handler := func(ctx Context) {
+		fctx := ctx.Context()
+
+		fileHandler(fctx)
+
+		status := fctx.Response.StatusCode()
+		if status != StatusNotFound && status != StatusForbidden {
+			return
+		}
+
+		// Pass to custom not found handlers if there are
+		if gb.router.notFound != nil {
+			gb.router.notFound[0](ctx)
+			return
+		}
+
+		// Default Not Found response
+		fctx.Error(fasthttp.StatusMessage(fasthttp.StatusNotFound),
+			fasthttp.StatusNotFound)
+	}
+
+	// TODO: Improve
+	gb.Get(prefix, handler)
+
+	if prefixLen > 1 && prefix[prefixLen-1] != '*' {
+		gb.Get(prefix+"/*", handler)
+	}
+}
+
 // NotFound registers an http handlers that will be called when no other routes
 // match with request
 func (gb *gearbox) NotFound(handlers ...handlerFunc) {
@@ -446,14 +520,6 @@ func (gb *gearbox) NotFound(handlers ...handlerFunc) {
 // For example, this is the right place for a logger or some security check or permission checking.
 func (gb *gearbox) Use(middlewares ...handlerFunc) {
 	gb.middlewares = append(gb.middlewares, middlewares...)
-}
-
-// Group appends a prefix to registered routes
-func (gb *gearbox) Group(prefix string, routes []*Route) []*Route {
-	for _, route := range routes {
-		route.Path = prefix + route.Path
-	}
-	return routes
 }
 
 // printStartupMessage prints gearbox info log message in parent process

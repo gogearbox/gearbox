@@ -69,7 +69,7 @@ func startGearbox(gb *gearbox) {
 	gb.setupRouter()
 	gb.httpServer = &fasthttp.Server{
 		Handler:      gb.router.Handler,
-		Logger:       nil,
+		Logger:       &customLogger{},
 		LogAllErrors: false,
 	}
 }
@@ -294,6 +294,58 @@ func TestMethods(t *testing.T) {
 				t.Errorf(" mismatch for route '%s' parameter '%s' actual '%s', expected '%s'",
 					tc.path, expectedKey, actualValue, expectedValue)
 			}
+		}
+	}
+}
+
+func TestStatic(t *testing.T) {
+	// get instance of gearbox
+	gb := setupGearbox(&Settings{
+		CaseInSensitive:        true,
+		AutoRecover:            true,
+		HandleOPTIONS:          true,
+		HandleMethodNotAllowed: true,
+	})
+
+	gb.Static("/static/", "./assets/")
+
+	// start serving
+	startGearbox(gb)
+
+	// Requests that will be tested
+	testCases := []struct {
+		method     string
+		path       string
+		statusCode int
+		body       string
+	}{
+		{method: MethodGet, path: "/static/gearbox.png", statusCode: StatusOK},
+	}
+
+	for _, tc := range testCases {
+		// create and make http request
+		req, _ := http.NewRequest(tc.method, tc.path, nil)
+
+		response, err := makeRequest(req, gb)
+
+		if err != nil {
+			t.Fatalf("%s(%s): %s", tc.method, tc.path, err.Error())
+		}
+
+		// check status code
+		if response.StatusCode != tc.statusCode {
+			t.Fatalf("%s(%s): returned %d expected %d", tc.method, tc.path, response.StatusCode, tc.statusCode)
+		}
+
+		// read body from response
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("%s(%s): %s", tc.method, tc.path, err.Error())
+		}
+
+		// check response body
+		if tc.body != "" && string(body) != tc.body {
+			t.Fatalf("%s(%s): returned %s expected %s", tc.method, tc.path, body, tc.body)
 		}
 	}
 }
