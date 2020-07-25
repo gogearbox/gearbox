@@ -454,9 +454,8 @@ func (gb *gearbox) Static(prefix, root string) {
 		root = root[:len(root)-1]
 	}
 
-	prefixLen := len(prefix)
-	if prefixLen > 1 && prefix[prefixLen-1] == '/' {
-		prefix = prefix[:prefixLen-1]
+	if len(prefix) > 1 && prefix[len(prefix)-1] == '/' {
+		prefix = prefix[:len(prefix)-1]
 	}
 
 	fs := &fasthttp.FS{
@@ -465,8 +464,8 @@ func (gb *gearbox) Static(prefix, root string) {
 		PathRewrite: func(ctx *fasthttp.RequestCtx) []byte {
 			path := ctx.Path()
 
-			if len(path) >= prefixLen {
-				path = path[prefixLen:]
+			if len(path) >= len(prefix) {
+				path = path[len(prefix):]
 			}
 
 			if len(path) > 0 && path[0] != '/' {
@@ -503,7 +502,7 @@ func (gb *gearbox) Static(prefix, root string) {
 	// TODO: Improve
 	gb.Get(prefix, handler)
 
-	if prefixLen > 1 && prefix[prefixLen-1] != '*' {
+	if len(prefix) > 1 && prefix[len(prefix)-1] != '*' {
 		gb.Get(prefix+"/*", handler)
 	}
 }
