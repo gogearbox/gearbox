@@ -71,8 +71,8 @@ func (r *router) handle(method, path string, handlers handlersChain) {
 
 // allowed checks if provided path can be routed in another method(s)
 func (r *router) allowed(reqMethod, path string, ctx *context) string {
+	var allow string
 	pathLen := len(path)
-	allow := ""
 	if (pathLen == 1 && path[0] == '*') || (pathLen > 1 && path[1] == '*') {
 		for method := range r.trees {
 			if method == MethodOptions {
@@ -172,12 +172,12 @@ func (r *router) Handler(fctx *fasthttp.RequestCtx) {
 	}
 
 	if method == MethodOptions && r.settings.HandleOPTIONS {
-		if allow := r.allowed(path, method, context); len(allow) > 0 {
+		if allow := r.allowed(method, path, context); len(allow) > 0 {
 			fctx.Response.Header.Set("Allow", allow)
 			return
 		}
 	} else if r.settings.HandleMethodNotAllowed {
-		if allow := r.allowed(path, method, context); len(allow) > 0 {
+		if allow := r.allowed(method, path, context); len(allow) > 0 {
 			fctx.Response.Header.Set("Allow", allow)
 			fctx.SetStatusCode(fasthttp.StatusMethodNotAllowed)
 			fctx.SetContentTypeBytes(defaultContentType)
