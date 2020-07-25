@@ -43,7 +43,7 @@ jobs:
 
     - name: Build
       run: go build
-    
+
     - name: Lint
       run: golint -set_exit_status ./...
 

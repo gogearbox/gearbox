@@ -133,7 +133,9 @@ func (r *router) Handler(fctx *fasthttp.RequestCtx) {
 	method := GetString(fctx.Method())
 
 	var cacheKey string
-	if !r.settings.DisableCaching {
+	useCache := !r.settings.DisableCaching &&
+		(method == MethodGet || method == MethodPost)
+	if useCache {
 		cacheKey = path + method
 		r.mutex.RLock()
 		cacheResult, ok := r.cache[cacheKey]
@@ -153,7 +155,7 @@ func (r *router) Handler(fctx *fasthttp.RequestCtx) {
 			context.handlers = handlers
 			context.handlers[0](context)
 
-			if !r.settings.DisableCaching {
+			if useCache {
 				r.mutex.Lock()
 
 				if r.cacheLen == r.settings.CacheSize {
