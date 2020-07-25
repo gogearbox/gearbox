@@ -68,7 +68,7 @@ func (ctx *context) Get(key string) string {
 }
 
 // Set sets the response's HTTP header field to the specified key, value.
-func (ctx *context) Set(key string, value string) {
+func (ctx *context) Set(key, value string) {
 	ctx.requestCtx.Response.Header.Set(key, value)
 }
 

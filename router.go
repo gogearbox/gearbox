@@ -46,9 +46,9 @@ func (r *router) releaseCtx(ctx *context) {
 // handle registers handlers for provided method and path to be used
 // in routing incoming requests
 func (r *router) handle(method, path string, handlers handlersChain) {
-	if len(path) == 0 {
+	if path == "" {
 		panic("path is empty")
-	} else if len(method) == 0 {
+	} else if method == "" {
 		panic("method is empty")
 	} else if path[0] != '/' {
 		panic("path must begin with '/' in path '" + path + "'")
@@ -79,7 +79,7 @@ func (r *router) allowed(reqMethod, path string, ctx *context) string {
 				continue
 			}
 
-			if len(allow) != 0 {
+			if allow != "" {
 				allow += ", " + method
 			} else {
 				allow = method
@@ -95,7 +95,7 @@ func (r *router) allowed(reqMethod, path string, ctx *context) string {
 
 		handlers := tree.matchRoute(path, ctx)
 		if handlers != nil {
-			if len(allow) != 0 {
+			if allow != "" {
 				allow += ", " + method
 			} else {
 				allow = method

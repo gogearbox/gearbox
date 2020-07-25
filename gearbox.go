@@ -149,7 +149,6 @@ type gearbox struct {
 	httpServer       *fasthttp.Server
 	router           *router
 	registeredRoutes []*Route
-	pool             sync.Pool
 	address          string // server address
 	middlewares      handlersChain
 	settings         *Settings

@@ -26,7 +26,7 @@ func (n *node) addRoute(path string, handlers handlersChain) {
 	originalPath := path
 	path = path[1:]
 
-	paramNames := make(map[string]bool, 0)
+	paramNames := make(map[string]bool)
 
 walk:
 	for {
@@ -48,15 +48,20 @@ walk:
 		if pathSegment[0] == ':' || pathSegment[0] == '*' {
 			// Parameter
 			if len(currentNode.children) > 0 {
-				panic("parameter " + pathSegment + " conflicts with existing static children in path '" + originalPath + "'")
+				panic("parameter " + pathSegment +
+					" conflicts with existing static children in path '" +
+					originalPath + "'")
 			}
 
 			if currentNode.param != nil {
 				if currentNode.param.path[0] == '*' {
-					panic("parameter " + pathSegment + " conflicts with catch all (*) route in path '" + originalPath + "'")
+					panic("parameter " + pathSegment +
+						" conflicts with catch all (*) route in path '" +
+						originalPath + "'")
 				} else if currentNode.param.path != pathSegment {
-					panic("parameter " + pathSegment + " in new path '" + originalPath +
-						"' conflicts with existing wildcard '" + currentNode.param.path)
+					panic("parameter " + pathSegment + " in new path '" +
+						originalPath + "' conflicts with existing wildcard '" +
+						currentNode.param.path)
 				}
 			}
 
@@ -65,12 +70,15 @@ walk:
 				if pathSegment[0] == '*' {
 					nType = catchAll
 					if pathLen > 1 {
-						panic("catch all (*) routes are only allowed at the end of the path in path '" + originalPath + "'")
+						panic("catch all (*) routes are only allowed " +
+							"at the end of the path in path '" +
+							originalPath + "'")
 					}
 				} else {
 					nType = parama
 					if _, ok := paramNames[pathSegment]; ok {
-						panic("parameter " + pathSegment + " must be unique in path '" + originalPath + "'")
+						panic("parameter " + pathSegment +
+							" must be unique in path '" + originalPath + "'")
 					} else {
 						paramNames[pathSegment] = true
 					}
@@ -79,7 +87,7 @@ walk:
 				currentNode.param = &node{
 					path:     pathSegment,
 					nType:    nType,
-					children: make(map[string]*node, 0),
+					children: make(map[string]*node),
 				}
 			}
 			currentNode = currentNode.param
@@ -96,7 +104,7 @@ walk:
 				child = &node{
 					path:     pathSegment,
 					nType:    static,
-					children: make(map[string]*node, 0),
+					children: make(map[string]*node),
 				}
 				currentNode.children[pathSegment] = child
 				currentNode = child
@@ -158,6 +166,6 @@ func createRootNode() *node {
 	return &node{
 		nType:    root,
 		path:     "/",
-		children: make(map[string]*node, 0),
+		children: make(map[string]*node),
 	}
 }
