@@ -1,4 +1,4 @@
-// Package gearbox is a web framework with a focus on high performance and memory optimization
+// Package gearbox is a web framework with a focus on high performance
 package gearbox
 
 import (
@@ -328,7 +328,6 @@ func (gb *gearbox) Start(address string) error {
 type customLogger struct{}
 
 func (dl *customLogger) Printf(format string, args ...interface{}) {
-	//log.Printf(format)
 }
 
 // newHTTPServer returns a new instance of fasthttp server
@@ -444,6 +443,7 @@ func (gb *gearbox) Group(prefix string, routes []*Route) []*Route {
 	return routes
 }
 
+// Static serves files in root directory under specific prefix
 func (gb *gearbox) Static(prefix, root string) {
 	if gb.settings.CaseInSensitive {
 		prefix = strings.ToLower(prefix)

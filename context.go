@@ -50,7 +50,7 @@ func (ctx *context) Context() *fasthttp.RequestCtx {
 	return ctx.requestCtx
 }
 
-// SendString sends body of response as a string
+// SendString sets body of response as a string
 func (ctx *context) SendString(value string) Context {
 	ctx.requestCtx.SetBodyString(value)
 	return ctx
@@ -77,7 +77,7 @@ func (ctx *context) Query(key string) string {
 	return GetString(ctx.requestCtx.QueryArgs().Peek(key))
 }
 
-// Body contains the raw body submitted in a POST request
+// Body returns the raw body submitted in a POST request
 func (ctx *context) Body() string {
 	return GetString(ctx.requestCtx.Request.Body())
 }

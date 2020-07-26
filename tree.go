@@ -9,7 +9,7 @@ type nodeType uint8
 const (
 	static nodeType = iota
 	root
-	parama
+	param
 	catchAll
 )
 
@@ -21,6 +21,7 @@ type node struct {
 	handlers handlersChain
 }
 
+// addRoute adds a node with the provided handlers to the path
 func (n *node) addRoute(path string, handlers handlersChain) {
 	currentNode := n
 	originalPath := path
@@ -74,7 +75,7 @@ func (n *node) addRoute(path string, handlers handlersChain) {
 							originalPath + "'")
 					}
 				} else {
-					nType = parama
+					nType = param
 					if _, ok := paramNames[pathSegment]; ok {
 						panic("parameter " + pathSegment +
 							" must be unique in path '" + originalPath + "'")
@@ -117,6 +118,7 @@ func (n *node) addRoute(path string, handlers handlersChain) {
 	}
 }
 
+// matchRoute returns handlers registered with the given path
 func (n *node) matchRoute(path string, ctx *context) handlersChain {
 	pathLen := len(path)
 	if pathLen > 0 && path[0] != '/' {
