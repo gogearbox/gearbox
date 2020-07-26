@@ -28,7 +28,6 @@ func (n *node) addRoute(path string, handlers handlersChain) {
 
 	paramNames := make(map[string]bool)
 
-walk:
 	for {
 		pathLen := len(path)
 		if pathLen == 0 {
@@ -115,7 +114,6 @@ walk:
 			segmentDelimiter++
 		}
 		path = path[segmentDelimiter:]
-		continue walk
 	}
 }
 
@@ -128,7 +126,6 @@ func (n *node) matchRoute(path string, ctx *context) handlersChain {
 	currentNode := n
 	path = path[1:]
 
-walk:
 	for {
 		pathLen = len(path)
 
@@ -149,12 +146,12 @@ walk:
 		if currentNode.param != nil {
 			currentNode = currentNode.param
 			ctx.paramValues[currentNode.path[1:]] = pathSegment
-			continue walk
+			continue
 		}
 
 		if child, ok := currentNode.children[pathSegment]; ok {
 			currentNode = child
-			continue walk
+			continue
 		}
 
 		return nil

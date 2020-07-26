@@ -27,15 +27,19 @@ type matchResult struct {
 	params   map[string]string
 }
 
+// acquireCtx returns instance of context after initializing it
 func (r *router) acquireCtx(fctx *fasthttp.RequestCtx) *context {
 	ctx := r.pool.Get().(*context)
 
+	// Initialize
 	ctx.index = 0
 	ctx.paramValues = make(map[string]string)
 	ctx.requestCtx = fctx
+
 	return ctx
 }
 
+// releaseCtx frees context
 func (r *router) releaseCtx(ctx *context) {
 	ctx.handlers = nil
 	ctx.paramValues = nil
@@ -56,10 +60,12 @@ func (r *router) handle(method, path string, handlers handlersChain) {
 		panic("no handlers provided with path '" + path + "'")
 	}
 
+	// initialize tree if it's empty
 	if r.trees == nil {
 		r.trees = make(map[string]*node)
 	}
 
+	// get root of method if it's existing, otherwise creates it
 	root := r.trees[method]
 	if root == nil {
 		root = createRootNode()
@@ -72,6 +78,7 @@ func (r *router) handle(method, path string, handlers handlersChain) {
 // allowed checks if provided path can be routed in another method(s)
 func (r *router) allowed(reqMethod, path string, ctx *context) string {
 	var allow string
+
 	pathLen := len(path)
 	if (pathLen == 1 && path[0] == '*') || (pathLen > 1 && path[1] == '*') {
 		for method := range r.trees {
@@ -199,6 +206,7 @@ func (r *router) Handler(fctx *fasthttp.RequestCtx) {
 		fasthttp.StatusNotFound)
 }
 
+// SetNotFound appends handlers to custom not found (404) handlers
 func (r *router) SetNotFound(handlers handlersChain) {
 	r.notFound = append(r.notFound, handlers...)
 }
