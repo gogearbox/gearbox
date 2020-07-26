@@ -77,7 +77,7 @@ func main() {
 
 	// Handler with parameter
 	gb.Get("/users/:user", func(ctx gearbox.Context) {
-		fmt.Printf("%s\n", ctx.Param("user"))
+		ctx.SendString(ctx.Param("user"))
 	})
 
 	// Start service
@@ -116,15 +116,15 @@ func main() {
 	gb.Get("/hello", func(ctx gearbox.Context) {
 		ctx.SendString("Hello World!")
 	})
-    
+
 	// Register the routes to be used when grouping routes
-	routes := []*gearbox.Route {
-		gb.Get("/id", func(ctx *gearbox.Context) {
+	routes := []*gearbox.Route{
+		gb.Get("/id", func(ctx gearbox.Context) {
 			ctx.SendString("User X")
 		}),
-		gb.Delete("/id", func(ctx *gearbox.Context) {
+		gb.Delete("/id", func(ctx gearbox.Context) {
 			ctx.SendString("Deleted")
-		})
+		}),
 	}
 
 	// Group account routes
@@ -135,7 +135,7 @@ func main() {
 
 	// Define a route with unAuthorizedMiddleware as the middleware
 	// you can define as many middlewares as you want and have the handler as the last argument
-	gb.Get("/protected", unAuthorizedMiddleware, func(ctx *gearbox.Context) {
+	gb.Get("/protected", unAuthorizedMiddleware, func(ctx gearbox.Context) {
 		ctx.SendString("You accessed a protected page")
 	})
 
@@ -143,6 +143,29 @@ func main() {
 	gb.Start(":3000")
 }
 ```
+
+#### Static Files
+
+```go
+package main
+
+import (
+	"github.com/gogearbox/gearbox"
+)
+
+func main() {
+	// Setup gearbox
+	gb := gearbox.New()
+
+	// Serve files in assets directory for prefix static
+	// for example /static/gearbox.png, etc.
+	gb.Static("/static", "./assets")
+
+	// Start service
+	gb.Start(":3000")
+}
+```
+
 
 ### Contribute & Support
 + Add a [GitHub Star](https://github.com/gogearbox/gearbox/stargazers)
