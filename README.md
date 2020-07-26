@@ -20,17 +20,13 @@
 </p>
 
 
-**gearbox** :gear: is a web framework for building micro services written in Go with a focus on high performance and memory optimization. 
+**gearbox** :gear: is a web framework for building micro services written in Go with a focus on high performance and memory optimization. It's built on [fasthttp](https://github.com/valyala/fasthttp) which is **up to 10x faster** than net/http
 
-Currently, **gearbox** :gear: is **under development (not production ready)** and built on [fasthttp](https://github.com/valyala/fasthttp) which is **up to 10x faster** than net/http
-
-In **gearbox**, we care about peformance and memory which will be used by each method while building things up and how we can improve that. It also takes more time to **research** about each component that will be used and **compare** it with different implementations of other open source web frameworks. It may end up writing our **own components** in an optimized way to achieve our goals
 
 ### gearbox seeks to be
 + Secure :closed_lock_with_key:
 + Fast :rocket:
-+ Simple :eyeglasses:
-+ Easy to use
++ Easy to use :eyeglasses:
 + Lightweight
 
 
@@ -58,8 +54,8 @@ func main() {
 	gb := gearbox.New()
 
 	// Define your handlers
-	gb.Get("/hello", func(ctx *gearbox.Context) {
-		ctx.RequestCtx.Response.SetBodyString("Hello World!")
+	gb.Get("/hello", func(ctx gearbox.Context) {
+		ctx.SendString("Hello World!")
 	})
 
 	// Start service
@@ -80,18 +76,8 @@ func main() {
 	gb := gearbox.New()
 
 	// Handler with parameter
-	gb.Get("/users/:user", func(ctx *gearbox.Context) {
-		fmt.Printf("%s\n", ctx.Params["user"])
-	})
-
-	// Handler with optional parameter
-	gb.Get("/search/:pattern?", func(ctx *gearbox.Context) {
-		fmt.Printf("%s\n", ctx.Params["pattern"])
-	})
-
-	// Handler with regex parameter
-	gb.Get("/book/:name:([a-z]+[0-3])", func(ctx *gearbox.Context) {
-		fmt.Printf("%s\n", ctx.Params["name"])
+	gb.Get("/users/:user", func(ctx gearbox.Context) {
+		ctx.SendString(ctx.Param("user"))
 	})
 
 	// Start service
@@ -113,33 +99,32 @@ func main() {
 	gb := gearbox.New()
 
 	// create a logger middleware
-	logMiddleware := func(ctx *gearbox.Context) {
-		log.Printf(ctx.RequestCtx.String())
+	logMiddleware := func(ctx gearbox.Context) {
+		log.Printf("log message!")
 		ctx.Next() // Next is what allows the request to continue to the next middleware/handler
 	}
 
 	// create an unauthorized middleware
-	unAuthorizedMiddleware := func(ctx *gearbox.Context) {
-		ctx.RequestCtx.SetStatusCode(401) // unauthorized status code
-		ctx.RequestCtx.Response.SetBodyString("You are unauthorized to access this page!")
+	unAuthorizedMiddleware := func(ctx gearbox.Context) {
+		ctx.Status(gearbox.StatusUnauthorized).SendString("You are unauthorized to access this page!")
 	}
 
 	// Register the log middleware for all requests
 	gb.Use(logMiddleware)
 
 	// Define your handlers
-	gb.Get("/hello", func(ctx *gearbox.Context) {
-		ctx.RequestCtx.Response.SetBodyString("Hello World!")
+	gb.Get("/hello", func(ctx gearbox.Context) {
+		ctx.SendString("Hello World!")
 	})
-    
+
 	// Register the routes to be used when grouping routes
-	routes := []*gearbox.Route {
-		gb.Get("/id", func(ctx *gearbox.Context) {
-			ctx.RequestCtx.Response.SetBodyString("User X")
+	routes := []*gearbox.Route{
+		gb.Get("/id", func(ctx gearbox.Context) {
+			ctx.SendString("User X")
 		}),
-		gb.Delete("/id", func(ctx *gearbox.Context) {
-			ctx.RequestCtx.Response.SetBodyString("Deleted")
-		})
+		gb.Delete("/id", func(ctx gearbox.Context) {
+			ctx.SendString("Deleted")
+		}),
 	}
 
 	// Group account routes
@@ -150,14 +135,37 @@ func main() {
 
 	// Define a route with unAuthorizedMiddleware as the middleware
 	// you can define as many middlewares as you want and have the handler as the last argument
-	gb.Get("/protected", unAuthorizedMiddleware, func(ctx *gearbox.Context) {
-		ctx.RequestCtx.Response.SetBodyString("You accessed a protected page")
+	gb.Get("/protected", unAuthorizedMiddleware, func(ctx gearbox.Context) {
+		ctx.SendString("You accessed a protected page")
 	})
 
 	// Start service
 	gb.Start(":3000")
 }
 ```
+
+#### Static Files
+
+```go
+package main
+
+import (
+	"github.com/gogearbox/gearbox"
+)
+
+func main() {
+	// Setup gearbox
+	gb := gearbox.New()
+
+	// Serve files in assets directory for prefix static
+	// for example /static/gearbox.png, etc.
+	gb.Static("/static", "./assets")
+
+	// Start service
+	gb.Start(":3000")
+}
+```
+
 
 ### Contribute & Support
 + Add a [GitHub Star](https://github.com/gogearbox/gearbox/stargazers)
