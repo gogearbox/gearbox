@@ -80,6 +80,8 @@ func (r *router) allowed(reqMethod, path string, ctx *context) string {
 	var allow string
 
 	pathLen := len(path)
+
+	// handle * and /* requests
 	if (pathLen == 1 && path[0] == '*') || (pathLen > 1 && path[1] == '*') {
 		for method := range r.trees {
 			if method == MethodOptions {

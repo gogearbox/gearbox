@@ -20,7 +20,7 @@
 </p>
 
 
-**gearbox** :gear: is a web framework for building micro services written in Go with a focus on high performance and memory optimization. It's built on [fasthttp](https://github.com/valyala/fasthttp) which is **up to 10x faster** than net/http
+**gearbox** :gear: is a web framework for building micro services written in Go with a focus on high performance. It's built on [fasthttp](https://github.com/valyala/fasthttp) which is **up to 10x faster** than net/http
 
 
 ### gearbox seeks to be
@@ -90,8 +90,9 @@ func main() {
 package main
 
 import (
-	"github.com/gogearbox/gearbox"
 	"log"
+
+	"github.com/gogearbox/gearbox"
 )
 
 func main() {
@@ -101,12 +102,16 @@ func main() {
 	// create a logger middleware
 	logMiddleware := func(ctx gearbox.Context) {
 		log.Printf("log message!")
-		ctx.Next() // Next is what allows the request to continue to the next middleware/handler
+
+		// Next is what allows the request to continue to the next
+		// middleware/handler
+		ctx.Next()
 	}
 
 	// create an unauthorized middleware
 	unAuthorizedMiddleware := func(ctx gearbox.Context) {
-		ctx.Status(gearbox.StatusUnauthorized).SendString("You are unauthorized to access this page!")
+		ctx.Status(gearbox.StatusUnauthorized)
+			.SendString("You are unauthorized to access this page!")
 	}
 
 	// Register the log middleware for all requests
@@ -134,7 +139,8 @@ func main() {
 	gb.Group("/api", accountRoutes)
 
 	// Define a route with unAuthorizedMiddleware as the middleware
-	// you can define as many middlewares as you want and have the handler as the last argument
+	// you can define as many middlewares as you want and have
+	// the handler as the last argument
 	gb.Get("/protected", unAuthorizedMiddleware, func(ctx gearbox.Context) {
 		ctx.SendString("You accessed a protected page")
 	})
@@ -179,7 +185,7 @@ Check [Our Docs](https://gogearbox.com/docs) for more information about **gearbo
 ### Sponsors
 Organizations that are helping to manage, promote, and support **Gearbox** :gear: 
 
-| <img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/trella-sponsor.png"/> 	|
+| [<img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/trella-sponsor.png"/>](https://www.trella.app) 	|
 |:-:	|
 | [trella](https://www.trella.app): *A B2B technology platform and trucking <br/>marketplace that connects shippers with carriers* |
 

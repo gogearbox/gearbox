@@ -379,8 +379,8 @@ func TestStart(t *testing.T) {
 // TestStartWithTLS tests start service method
 func TestStartWithTLS(t *testing.T) {
 	gb := New(&Settings{
-		TLSKeyPath:  "ssl-cert-snakeoil.key",
-		TLSCertPath: "ssl-cert-snakeoil.crt",
+		TLSKeyPath:  "./assets/ssl-cert-snakeoil.key",
+		TLSCertPath: "./assets/ssl-cert-snakeoil.crt",
 		TLSEnabled:  true,
 	})
 
