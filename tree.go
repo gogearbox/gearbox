@@ -39,12 +39,12 @@ walk:
 			break
 		}
 
-		segmentDelimter := strings.Index(path, "/")
-		if segmentDelimter == -1 {
-			segmentDelimter = pathLen
+		segmentDelimiter := strings.Index(path, "/")
+		if segmentDelimiter == -1 {
+			segmentDelimiter = pathLen
 		}
 
-		pathSegment := path[:segmentDelimter]
+		pathSegment := path[:segmentDelimiter]
 		if pathSegment[0] == ':' || pathSegment[0] == '*' {
 			// Parameter
 			if len(currentNode.children) > 0 {
@@ -111,10 +111,10 @@ walk:
 			}
 		}
 
-		if pathLen > segmentDelimter {
-			segmentDelimter++
+		if pathLen > segmentDelimiter {
+			segmentDelimiter++
 		}
-		path = path[segmentDelimter:]
+		path = path[segmentDelimiter:]
 		continue walk
 	}
 }
@@ -135,16 +135,16 @@ walk:
 		if pathLen == 0 || currentNode.nType == catchAll {
 			return currentNode.handlers
 		}
-		segmentDelimter := strings.Index(path, "/")
-		if segmentDelimter == -1 {
-			segmentDelimter = pathLen
+		segmentDelimiter := strings.Index(path, "/")
+		if segmentDelimiter == -1 {
+			segmentDelimiter = pathLen
 		}
-		pathSegment := path[:segmentDelimter]
+		pathSegment := path[:segmentDelimiter]
 
-		if pathLen > segmentDelimter {
-			segmentDelimter++
+		if pathLen > segmentDelimiter {
+			segmentDelimiter++
 		}
-		path = path[segmentDelimter:]
+		path = path[segmentDelimiter:]
 
 		if currentNode.param != nil {
 			currentNode = currentNode.param

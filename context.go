@@ -32,7 +32,7 @@ type context struct {
 }
 
 // Next function is used to successfully pass from current middleware to next middleware.
-// if the middleware thinks it's okay to pass it.
+// if the middleware thinks it's okay to pass it
 func (ctx *context) Next() {
 	ctx.index++
 	if ctx.index < len(ctx.handlers) {
@@ -40,44 +40,44 @@ func (ctx *context) Next() {
 	}
 }
 
+// Param returns value of path parameter specified by key
 func (ctx *context) Param(key string) string {
 	return ctx.paramValues[key]
 }
 
+// Context returns Fasthttp context
 func (ctx *context) Context() *fasthttp.RequestCtx {
 	return ctx.requestCtx
 }
 
-// SendString sends trinsdf
+// SendString sends body of response as a string
 func (ctx *context) SendString(value string) Context {
 	ctx.requestCtx.SetBodyString(value)
 	return ctx
 }
 
-// Status sets the HTTP status code and if the response body is empty,
-// it sets the correct status message in the body.
+// Status sets the HTTP status code
 func (ctx *context) Status(status int) Context {
 	ctx.requestCtx.Response.SetStatusCode(status)
 	return ctx
 }
 
-// Get returns the HTTP request header specified by field.
-
+// Get returns the HTTP request header specified by field key
 func (ctx *context) Get(key string) string {
 	return GetString(ctx.requestCtx.Request.Header.Peek(key))
 }
 
-// Set sets the response's HTTP header field to the specified key, value.
+// Set sets the response's HTTP header field key to the specified key, value
 func (ctx *context) Set(key, value string) {
 	ctx.requestCtx.Response.Header.Set(key, value)
 }
 
-// Query returns the query string parameter in the url.
+// Query returns the query string parameter in the request url
 func (ctx *context) Query(key string) string {
 	return GetString(ctx.requestCtx.QueryArgs().Peek(key))
 }
 
-// Body contains the raw body submitted in a POST request.
+// Body contains the raw body submitted in a POST request
 func (ctx *context) Body() string {
 	return GetString(ctx.requestCtx.Request.Body())
 }
