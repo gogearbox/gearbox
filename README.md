@@ -182,7 +182,7 @@ func main() {
 - **OS** Linux
 
 <p align="center">
-	<img src="./assets/benchmark-pipeline.png" width="80%"/>
+	<img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/benchmark-pipeline.png" width="85%"/>
 </p>
 
 For more results, check [Our Docs](https://gogearbox.com/docs/benchmarks)
