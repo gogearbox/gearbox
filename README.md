@@ -1,5 +1,7 @@
 <p align="center">
-    <img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/gearbox-512.png"/>
+	<a href="https://gogearbox.com">
+    	<img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/gearbox-512.png"/>
+	</a>
     <br />
     <a href="https://godoc.org/github.com/gogearbox/gearbox">
       <img src="https://godoc.org/github.com/gogearbox/gearbox?status.png" />
@@ -172,6 +174,15 @@ func main() {
 }
 ```
 
+### Benchmarks
+- **CPU** 3.1 GHz Intel Xeon® Platinum 8175M (24 physical cores, 48 logical cores)
+- **MEMORY** 192GB
+- **GO** go 1.14.6 linux/amd64
+- **OS** Linux
+<p align="center">
+	<img src="./assets/benchmark-pipeline.png"/>
+</p>
+For more results, check our [docs](https://gogearbox.com/docs/benchmarks)
 
 ### Contribute & Support
 + Add a [GitHub Star](https://github.com/gogearbox/gearbox/stargazers)
