@@ -175,13 +175,16 @@ func main() {
 ```
 
 ### Benchmarks
+
 - **CPU** 3.1 GHz Intel Xeon® Platinum 8175M (24 physical cores, 48 logical cores)
 - **MEMORY** 192GB
 - **GO** go 1.14.6 linux/amd64
 - **OS** Linux
+
 <p align="center">
-	<img src="./assets/benchmark-pipeline.png" width="70%"/>
+	<img src="./assets/benchmark-pipeline.png" width="80%"/>
 </p>
+
 For more results, check [Our Docs](https://gogearbox.com/docs/benchmarks)
 
 ### Contribute & Support
