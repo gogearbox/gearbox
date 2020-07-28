@@ -180,9 +180,9 @@ func main() {
 - **GO** go 1.14.6 linux/amd64
 - **OS** Linux
 <p align="center">
-	<img src="https://raw.githubusercontent.com/gogearbox/gearbox/master/assets/benchmark-pipeline.png"/>
+	<img src="./assets/benchmark-pipeline.png" width="70%"/>
 </p>
-For more results, check our [docs](https://gogearbox.com/docs/benchmarks)
+For more results, check [Our Docs](https://gogearbox.com/docs/benchmarks)
 
 ### Contribute & Support
 + Add a [GitHub Star](https://github.com/gogearbox/gearbox/stargazers)
