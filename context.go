@@ -1,7 +1,16 @@
 package gearbox
 
 import (
+	"fmt"
+	"strings"
+
+	jsoniter "github.com/json-iterator/go"
 	"github.com/valyala/fasthttp"
+)
+
+// MIME types
+const (
+	MIMEApplicationJSON = "application/json"
 )
 
 // Context interface
@@ -15,6 +24,7 @@ type Context interface {
 	Set(key string, value string)
 	Get(key string) string
 	Body() string
+	ParseBody(out interface{}) error
 }
 
 // handlerFunc defines the handler used by middleware as return value.
@@ -80,4 +90,19 @@ func (ctx *context) Query(key string) string {
 // Body returns the raw body submitted in a POST request
 func (ctx *context) Body() string {
 	return GetString(ctx.requestCtx.Request.Body())
+}
+
+// ParseBody parses request body into provided struct
+// Supports decoding theses types: application/json
+func (ctx *context) ParseBody(out interface{}) error {
+	contentType := GetString(ctx.requestCtx.Request.Header.ContentType())
+	if strings.HasPrefix(contentType, MIMEApplicationJSON) {
+		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		return json.Unmarshal(ctx.requestCtx.Request.Body(), out)
+	}
+
+	return fmt.Errorf("content type '%s' is not supported, "+
+		"please open a request to support it "+
+		"(https://github.com/gogearbox/gearbox/issues/new?template=feature_request.md)",
+		contentType)
 }
