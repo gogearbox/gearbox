@@ -19,7 +19,9 @@ type Context interface {
 	Context() *fasthttp.RequestCtx
 	Param(key string) string
 	Query(key string) string
+	SendBytes(value []byte) Context
 	SendString(value string) Context
+	SendJSON(in interface{}) error
 	Status(status int) Context
 	Set(key string, value string)
 	Get(key string) string
@@ -60,10 +62,33 @@ func (ctx *context) Context() *fasthttp.RequestCtx {
 	return ctx.requestCtx
 }
 
-// SendString sets body of response as a string
+// SendBytes sets body of response for []byte type
+func (ctx *context) SendBytes(value []byte) Context {
+	ctx.requestCtx.Response.SetBodyRaw(value)
+	return ctx
+}
+
+// SendString sets body of response for string type
 func (ctx *context) SendString(value string) Context {
 	ctx.requestCtx.SetBodyString(value)
 	return ctx
+}
+
+// SendJSON converts any interface to json, sets it to the body of response
+// and sets content type header to application/json.
+func (ctx *context) SendJSON(in interface{}) error {
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	raw, err := json.Marshal(in)
+	// Check for errors
+	if err != nil {
+		return err
+	}
+
+	// Set http headers
+	ctx.requestCtx.Response.Header.SetContentType(MIMEApplicationJSON)
+	ctx.requestCtx.Response.SetBodyRaw(raw)
+
+	return nil
 }
 
 // Status sets the HTTP status code
