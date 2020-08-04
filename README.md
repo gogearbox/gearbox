@@ -229,3 +229,4 @@ Logo is created by [Mahmoud Sayed](https://www.facebook.com/mahmoudsayedae) and 
 
 #### Third-party library licenses
 - [FastHTTP](https://github.com/valyala/fasthttp/blob/master/LICENSE)
+- [json-iterator](https://github.com/json-iterator/go/blob/master/LICENSE)

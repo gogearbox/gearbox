@@ -1,7 +1,16 @@
 package gearbox
 
 import (
+	"fmt"
+	"strings"
+
+	jsoniter "github.com/json-iterator/go"
 	"github.com/valyala/fasthttp"
+)
+
+// MIME types
+const (
+	MIMEApplicationJSON = "application/json"
 )
 
 // Context interface
@@ -10,11 +19,14 @@ type Context interface {
 	Context() *fasthttp.RequestCtx
 	Param(key string) string
 	Query(key string) string
+	SendBytes(value []byte) Context
 	SendString(value string) Context
+	SendJSON(in interface{}) error
 	Status(status int) Context
 	Set(key string, value string)
 	Get(key string) string
 	Body() string
+	ParseBody(out interface{}) error
 }
 
 // handlerFunc defines the handler used by middleware as return value.
@@ -50,10 +62,33 @@ func (ctx *context) Context() *fasthttp.RequestCtx {
 	return ctx.requestCtx
 }
 
-// SendString sets body of response as a string
+// SendBytes sets body of response for []byte type
+func (ctx *context) SendBytes(value []byte) Context {
+	ctx.requestCtx.Response.SetBodyRaw(value)
+	return ctx
+}
+
+// SendString sets body of response for string type
 func (ctx *context) SendString(value string) Context {
 	ctx.requestCtx.SetBodyString(value)
 	return ctx
+}
+
+// SendJSON converts any interface to json, sets it to the body of response
+// and sets content type header to application/json.
+func (ctx *context) SendJSON(in interface{}) error {
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	raw, err := json.Marshal(in)
+	// Check for errors
+	if err != nil {
+		return err
+	}
+
+	// Set http headers
+	ctx.requestCtx.Response.Header.SetContentType(MIMEApplicationJSON)
+	ctx.requestCtx.Response.SetBodyRaw(raw)
+
+	return nil
 }
 
 // Status sets the HTTP status code
@@ -80,4 +115,19 @@ func (ctx *context) Query(key string) string {
 // Body returns the raw body submitted in a POST request
 func (ctx *context) Body() string {
 	return GetString(ctx.requestCtx.Request.Body())
+}
+
+// ParseBody parses request body into provided struct
+// Supports decoding theses types: application/json
+func (ctx *context) ParseBody(out interface{}) error {
+	contentType := GetString(ctx.requestCtx.Request.Header.ContentType())
+	if strings.HasPrefix(contentType, MIMEApplicationJSON) {
+		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		return json.Unmarshal(ctx.requestCtx.Request.Body(), out)
+	}
+
+	return fmt.Errorf("content type '%s' is not supported, "+
+		"please open a request to support it "+
+		"(https://github.com/gogearbox/gearbox/issues/new?template=feature_request.md)",
+		contentType)
 }
