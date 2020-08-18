@@ -4,5 +4,5 @@ go 1.14
 
 require (
 	github.com/json-iterator/go v1.1.10
-	github.com/valyala/fasthttp v1.15.1
+	github.com/valyala/fasthttp v1.16.0
 )
