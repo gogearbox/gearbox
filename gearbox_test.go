@@ -122,7 +122,7 @@ var handler = func(ctx Context) {}
 var errorHandler = func(ctx Context) {
 	m := make(map[string]int)
 	m["a"] = 0
-	ctx.SendString(string(5 / m["a"]))
+	ctx.SendString(string(rune(5 / m["a"])))
 }
 
 // headerHandler echos header's value of key "my-header"
