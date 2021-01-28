@@ -38,9 +38,7 @@ func (n *node) addRoute(path string, handlers handlersChain) {
 
 			// Make a deep copy of handler's references
 			routeHandlers := make(handlersChain, len(handlers))
-			for i, p := range handlers {
-				routeHandlers[i] = p
-			}
+			copy(routeHandlers, handlers)
 
 			currentNode.handlers = routeHandlers
 			break
