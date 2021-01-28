@@ -35,7 +35,14 @@ func (n *node) addRoute(path string, handlers handlersChain) {
 			if currentNode.handlers != nil {
 				panic("handlers are already registered for path '" + originalPath + "'")
 			}
-			currentNode.handlers = handlers
+
+			// Make a deep copy of handler's references
+			routeHandlers := make(handlersChain, len(handlers))
+			for i, p := range handlers {
+				routeHandlers[i] = p
+			}
+
+			currentNode.handlers = routeHandlers
 			break
 		}
 
