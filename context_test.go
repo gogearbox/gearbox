@@ -11,9 +11,10 @@ func TestNext(t *testing.T) {
 	routes := []struct {
 		path       string
 		middleware handlerFunc
+		handler    handlerFunc
 	}{
-		{path: "/ok", middleware: emptyMiddleware},
-		{path: "/unauthorized", middleware: unAuthorizedHandler},
+		{path: "/ok", middleware: emptyMiddleware, handler: emptyMiddlewareHandler},
+		{path: "/unauthorized", middleware: unAuthorizedHandler, handler: emptyHandler},
 	}
 
 	// get instance of gearbox
@@ -21,7 +22,7 @@ func TestNext(t *testing.T) {
 
 	// register routes according to method
 	for _, r := range routes {
-		gb.Get(r.path, r.middleware, emptyHandler)
+		gb.Get(r.path, r.middleware, r.handler)
 	}
 
 	// start serving

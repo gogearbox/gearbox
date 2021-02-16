@@ -25,6 +25,8 @@ type Context interface {
 	Status(status int) Context
 	Set(key string, value string)
 	Get(key string) string
+	SetLocal(key string, value interface{})
+	GetLocal(key string) interface{}
 	Body() string
 	ParseBody(out interface{}) error
 }
@@ -115,6 +117,17 @@ func (ctx *context) Query(key string) string {
 // Body returns the raw body submitted in a POST request
 func (ctx *context) Body() string {
 	return GetString(ctx.requestCtx.Request.Body())
+}
+
+// SetLocal stores value with key within request scope and it is accessible through
+// handlers of that request
+func (ctx *context) SetLocal(key string, value interface{}) {
+	ctx.requestCtx.SetUserValue(key, value)
+}
+
+// GetLocal gets value by key which are stored by SetLocal within request scope
+func (ctx *context) GetLocal(key string) interface{} {
+	return ctx.requestCtx.UserValue(key)
 }
 
 // ParseBody parses request body into provided struct
