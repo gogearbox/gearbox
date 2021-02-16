@@ -157,7 +157,18 @@ var fallbackHandler = func(ctx Context) {
 
 // emptyMiddleware does not stop the request and passes it to the next middleware/handler
 var emptyMiddleware = func(ctx Context) {
+	// Try to set user data
+	ctx.SetLocal("test-key", "value")
+
 	ctx.Next()
+}
+
+// emptyMiddlewareHandler just an empty handler
+var emptyMiddlewareHandler = func(ctx Context) {
+	data, ok := ctx.GetLocal("test-key").(string)
+	if !ok || data != "value" {
+		panic("test-key value is wrong")
+	}
 }
 
 // registerRoute matches with register route request with available methods and calls it
