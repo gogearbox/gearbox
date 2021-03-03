@@ -34,7 +34,7 @@
 
 ### Supported Go versions & installation
 
-:gear: gearbox requires version `1.11` or higher of Go ([Download Go](https://golang.org/dl/))
+:gear: gearbox requires version `1.14` or higher of Go ([Download Go](https://golang.org/dl/))
 
 Just use [go get](https://golang.org/cmd/go/#hdr-Add_dependencies_to_current_module_and_install_them) to download and install gearbox
 

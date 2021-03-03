@@ -1,6 +1,6 @@
 module github.com/gogearbox/gearbox
 
-go 1.14
+go 1.16
 
 require (
 	github.com/json-iterator/go v1.1.10
