@@ -131,7 +131,10 @@ func (n *node) matchRoute(path string, ctx *context) handlersChain {
 	}
 
 	currentNode := n
-	path = path[1:]
+
+	if pathLen > 0 {
+		path = path[1:]
+	}
 
 	for {
 		pathLen = len(path)
