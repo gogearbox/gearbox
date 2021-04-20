@@ -3,7 +3,6 @@ package gearbox
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"strings"
@@ -384,7 +383,7 @@ func (gb *gearbox) Stop() error {
 
 	// check if shutdown was ok and server had valid address
 	if err == nil && gb.address != "" {
-		log.Printf("%s stopped listening on %s", Name, gb.address)
+		fmt.Sprintf("%s stopped listening on %s", Name, gb.address)
 		return nil
 	}
 
@@ -526,8 +525,8 @@ func (gb *gearbox) Use(middlewares ...handlerFunc) {
 // and prints process id for child process
 func printStartupMessage(addr string) {
 	if prefork.IsChild() {
-		log.Printf("Started child proc #%v\n", os.Getpid())
+		fmt.Sprintf("Started child proc #%v\n", os.Getpid())
 	} else {
-		fmt.Sprintln(banner, Version, addr)
+		fmt.Sprintf(banner, Version, addr)
 	}
 }
