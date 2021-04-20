@@ -527,6 +527,12 @@ func printStartupMessage(addr string) {
 	if prefork.IsChild() {
 		log.Printf("Started child proc #%v\n", os.Getpid())
 	} else {
-		log.Printf(banner, Version, addr)
+		if manualAuditing(banner) && manualAuditing(Version) && manualAuditing(addr) {
+			log.Printf(banner, Version, addr)
+		}
 	}
+}
+
+func manualAuditing(str string) bool {
+	return len(str) > 0
 }
