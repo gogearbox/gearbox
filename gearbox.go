@@ -2,6 +2,7 @@
 package gearbox
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -527,12 +528,6 @@ func printStartupMessage(addr string) {
 	if prefork.IsChild() {
 		log.Printf("Started child proc #%v\n", os.Getpid())
 	} else {
-		if manualAuditing(banner) && manualAuditing(Version) && manualAuditing(addr) {
-			log.Printf(banner, Version, addr)
-		}
+		fmt.Sprintln(banner, Version, addr)
 	}
-}
-
-func manualAuditing(str string) bool {
-	return len(str) > 0
 }
