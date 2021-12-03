@@ -162,6 +162,15 @@ type Settings struct {
 
 	// Maximum size of LRU cache that will be used in routing if it's enabled
 	CacheSize int // default 1000
+	
+	// Per-connection buffer size for requests' reading.
+	// This also limits the maximum header size.
+	//
+	// Increase this buffer if your clients send multi-KB RequestURIs
+	// and/or multi-KB headers (for example, BIG cookies).
+	//
+	// Default buffer size is used if not set.
+	ReadBufferSize int
 
 	// Enables answering with HTTP status code 405 if request does not match
 	// with any route, but there are another methods are allowed for that route
@@ -346,6 +355,7 @@ func (gb *gearbox) newHTTPServer() *fasthttp.Server {
 		ReadTimeout:                   gb.settings.ReadTimeout,
 		WriteTimeout:                  gb.settings.WriteTimeout,
 		IdleTimeout:                   gb.settings.IdleTimeout,
+		ReadBufferSize:                gb.settings.ReadBufferSize,
 	}
 }
 
